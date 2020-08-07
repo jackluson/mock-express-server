@@ -1,0 +1,54 @@
+@host = http://localhost:9009
+@basaPath = mock-api
+@token = Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJzaGEyNTYifQ.W3siaXNzIjoiZG9mIiwibmJmIjoxNTk2NzgwNzk2LCJpYXQiOjE1OTY3ODA3OTYsInNpZCI6MSwidHphIjoiQ1NUIiwiZXhwIjoxNTk2ODY3MTk2fSx7InVpZCI6NDk2OCwidHlwIjoiYSJ9XQ.ZTU5MDJlNGQwZTFjZjMyYWMyMzI4YjkzZTQxZDYzM2ZiYTA3MzdlZWQ0MDUyYjhlYTAyM2QzMGI1NDgyYjIzZQ
+
+
+POST {{host}}/{{basaPath}}/v1/admin/batchQueryDepartInfo
+Content-Type: application/json
+
+{
+    "name": "sample",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}
+
+###
+POST {{host}}/{{basaPath}}/v1/admin/batchQueryAdminList
+Content-Type: application/json
+
+{
+    "name": "sample",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}
+
+# case: data: { type: 'object', description: '返回对象' },
+###
+GET {{host}}/{{basaPath}}/v1/admin/rosterFieldList
+?page=1
+&test=1
+&bundle_id=demo
+&msg=123123
+&token={{token}}
+
+
+# case:  data: { description: '返回对象', '$ref': '#/definitions/RosterPageDto' },
+###
+GET {{host}}/{{basaPath}}/v1/admin/getAdminDetail
+
+
+# tags=approval-controller
+###
+POST {{host}}/{{basaPath}}/v1/approval/detail
+Content-Type: application/json
+
+{
+    "name": "sample",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}
+
+# tags=薪酬）薪酬计算接口
+###
+GET {{host}}/{{basaPath}}/v1/salary-calculate/getDetail
+Authorization: {{token}}
+
+###
+POST {{host}}/{{basaPath}}/v1/salary-calculate/saveCalculateTemplate
