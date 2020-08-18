@@ -23,10 +23,11 @@ export const mockObjectData = (properties, definitions) => {
         // eslint-disable-next-line no-case-declarations
         const refUrl = items?.$ref?.replace('#/definitions/', '');
         if (refUrl) {
-          const schemeConfig = definitions[refUrl];
-          data = Array.from({ length: 5 }).map(() => mockResponseData(schemeConfig, definitions));
+          const schemaConfig = definitions[refUrl];
+          data = Array.from({ length: 5 }).map(() => mockResponseData(schemaConfig, definitions));
         } else if (items.items) {
           data = Array.from({ length: 3 });
+
           while (items.items) {
             data.forEach(function (_item, index) {
               data[index] = Array.from({ length: 2 });
@@ -35,19 +36,22 @@ export const mockObjectData = (properties, definitions) => {
           }
           const refPath = items.$ref?.replace('#/definitions/', '');
           if (refPath) {
-            const schemeConfig = definitions[refPath];
-            data.forEach((_item, index) => {
-              data[index] = Array.from({ length: 3 }).map(mockResponseData(schemeConfig, definitions));
-            });
+            const schemaConfig = definitions[refPath];
+            console.log(': --------------------------------------------');
+            console.log('mockObjectData -> schemaConfig', schemaConfig);
+            console.log(': --------------------------------------------');
+            data = mockArrayData(data, definitions, refPath);
           }
+        } else {
+          data = [];
         }
         break;
       default:
         // eslint-disable-next-line no-case-declarations
         const refPath = $ref?.replace('#/definitions/', '');
         if (refPath) {
-          const schemeConfig = definitions[refPath];
-          data = mockResponseData(schemeConfig, definitions);
+          const schemaConfig = definitions[refPath];
+          data = mockResponseData(schemaConfig, definitions);
         } else {
           data = basisTypeData(config);
         }
@@ -55,7 +59,9 @@ export const mockObjectData = (properties, definitions) => {
     }
     mockData[property] = data;
   }
+  return mockData;
 };
+
 export const basisTypeData = (config) => {
   const { type, format } = config;
   let data;
@@ -76,12 +82,29 @@ export const basisTypeData = (config) => {
   }
   return data;
 };
-export const mockResponseData = (schemelConfig, definitions) => {
-  const { type } = schemelConfig;
+
+export const mockArrayData = (arr: [], definitions, refPath) => {
+  if (Array.isArray(arr)) {
+    const mockDataList = [];
+    arr.reduce((acc, cur, index) => {
+      if (Array.isArray(cur)) {
+        acc[index] = mockArrayData(cur, definitions, refPath);
+      } else {
+        const schemaConfig = definitions[refPath];
+        acc[index] = mockResponseData(schemaConfig, definitions);
+      }
+      return acc;
+    }, mockDataList);
+    return mockDataList;
+  }
+};
+
+export const mockResponseData = (schemaConfig, definitions) => {
+  const { type, properties } = schemaConfig;
   let mockData: any;
   switch (type) {
     case 'object':
-      mockData = mockObjectData(schemelConfig.properties, definitions);
+      mockData = mockObjectData(properties, definitions);
       break;
 
     default:

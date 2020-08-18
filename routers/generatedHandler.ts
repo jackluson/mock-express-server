@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 /*
  * Desc: 依据swagger配置文件，动态挂在handler
  * File: \routers\generatedHandler\index.ts
@@ -5,8 +6,18 @@
  * File Created: Wednesday, 5th August 2020 4:15:14 pm
  */
 
-import { mockResponseData } from './mockTypeData';
 import { Response, Request } from 'express';
+import { MockResponse } from 'typings/global';
+import { mockResponseData } from './mockTypeData';
+import { validateRequestBody } from './requestBodyValidater';
+
+export enum Code {
+  Unlogin = 10001,
+  Redirect,
+  ParameterError = 30001, //参数错误
+  Unknown,
+  Success = 30000,
+}
 
 /**
  * 依据tag过滤Paths
@@ -38,10 +49,10 @@ const filterPath = (paths: Record<string, any>, filterTagsStr: string) => {
  * @param {*} swaggerConfig
  * @param {string} [filterTagsStr='']
  */
-const generatedHandler = (routers, swaggerConfig, filterTagsStr = '（薪酬）薪酬计算接口') => {
+const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相关接口') => {
   const { paths, definitions } = swaggerConfig;
 
-  const code = 30000;
+  const code = Code.Success;
 
   const functionBody = `
   const response = {
@@ -53,10 +64,6 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '（薪酬）�
   return res.json(response);
 `;
   const filterPaths = filterTagsStr ? filterPath(paths, filterTagsStr) : paths;
-  console.log(': --------------------------------------------');
-  console.log('generatedHandler -> filterPaths', filterPaths);
-  console.log(': --------------------------------------------');
-
   /* 遍历赋值routers */
   for (const path in filterPaths) {
     const pathConfig = filterPaths[path];
@@ -70,53 +77,123 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '（薪酬）�
         routers[operationId] = new Function('req', 'res', functionBody);
       }
       if (responses) {
-        const statusCode = Object.keys(responses);
-        const code = '200';
-        const $ref = responses[code]?.schema?.$ref;
-        if (statusCode.includes(code) && $ref) {
-          const refUrl = $ref.replace('#/definitions/', '');
-          const schemeConfig = definitions[refUrl];
-          if (schemeConfig) {
-            /* 覆盖之前默认的 */
-            routers[operationId] = (req: Request, res: Response) => {
-              console.log('parameters', parameters);
-              console.log('headers', req.headers);
+        /* 覆盖之前默认的 */
+        routers[operationId] = (req: Request, res: Response) => {
+          const { url, method, headers, query, body } = req;
+          console.log(' body, query', body, query);
+          const payLoad = method === 'GET' ? query : body;
 
-              let code = 30000;
-              const response = {
-                code,
-                schemeConfig,
-                req: {
-                  url: req.url,
-                  method: req.method,
-                  [req.method === 'GET' ? 'query' : 'body']: req.method === 'GET' ? req.query : req.body,
-                },
-                data: {},
-              };
-              const { authorization } = req.headers;
+          let code: Code = Code.Success;
+          const response: MockResponse = {
+            code,
+            req: {
+              url,
+              method,
+              [method === 'GET' ? 'query' : 'body']: payLoad,
+            },
+            data: {},
+            header: {},
+          };
 
-              if (!authorization) {
-                code = 10001;
-              }
+          // 没有权限
+          const { authorization } = headers;
+          let requiredParameters = [];
+          if (!authorization) {
+            code = Code.Unlogin;
+            response.data['message'] = 'authorized error, please login again';
+            response.data['code'] = code;
+          } else {
+            /* 提取必须参数 */
+            requiredParameters = parameters.filter((parameters) => parameters.required);
+            console.log('requiredParameters', requiredParameters);
+          }
 
-              switch (code) {
-                /* 没有登录 */
-                case 10001:
-                  response.code = code;
-                  return res.status(401).json(response);
-                case 10002:
-                  response.code = code;
-                  res.redirect(301, 'https://google.com');
+          // 参数错误
+          if (requiredParameters.length > 0) {
+            requiredParameters.forEach((requiredParameter) => {
+              const { name } = requiredParameter;
+              const payloadKey = requiredParameter.in;
+              console.log(': ------------------------------------------');
+              console.log('generatedHandler -> payloadKey', payloadKey);
+              console.log(': ------------------------------------------');
+              switch (payloadKey) {
+                case 'header':
+                  const val = headers[name];
+                  console.log(': ----------------------------');
+                  console.log('generatedHandler -> val', val);
+                  console.log(': ----------------------------');
+                  if (!val) {
+                    response.header[name] = `请求头请携带${name}参数`;
+                  }
+                  break;
+                case 'query':
+                  const qureyVal = query[name];
+                  if (!qureyVal) {
+                    response.data[name] = `${name}参数缺失`;
+                  }
+                  break;
+                case 'body':
+                  const {
+                    schema: { $ref },
+                  } = requiredParameter;
+                  const refUrl = $ref?.replace('#/definitions/', '');
+                  const schemaConfig = definitions[refUrl];
+                  response.schemaConfig = schemaConfig;
+                  const data = validateRequestBody(schemaConfig);
+                  console.log(': ------------------------------');
+                  console.log('generatedHandler -> data', data);
+                  console.log(': ------------------------------');
+                  // response.data = validateRequestBody(schemaConfig);
+
                   break;
                 default:
-                  response.data = {
-                    ...mockResponseData(schemeConfig, definitions),
-                  };
-                  return res.json(response);
+                  break;
               }
-            };
+            });
+            console.log('response.data', response.data);
+
+            if (Object.keys(response.data).length) {
+              code = Code.ParameterError;
+            }
           }
-        }
+
+          if (payLoad.redirect) {
+            code = Code.Unknown;
+          }
+
+          switch (code) {
+            /* 没有登录 */
+            case Code.Unlogin:
+              response.code = code;
+              res.status(401).json(response);
+              break;
+            case Code.ParameterError:
+              response.code = code;
+              res.json(response);
+              break;
+            case Code.Unknown:
+              response.code = code;
+              res.redirect(301, 'https://google.com');
+              break;
+            case Code.Success:
+              response.code = code;
+              const statusCode = '200';
+              const $ref = responses[statusCode]?.schema?.$ref;
+              const refUrl = $ref.replace('#/definitions/', '');
+              const schemaConfig = definitions[refUrl];
+              console.log(': ----------------------------------------------');
+              console.log('generatedHandler -> schemaConfig', schemaConfig);
+              console.log(': ----------------------------------------------');
+              response.data = {
+                ...mockResponseData(schemaConfig, definitions),
+              };
+              console.log('response', response);
+
+              return res.json(response);
+            default:
+              return res.json(response);
+          }
+        };
       }
     }
   }
