@@ -9,7 +9,7 @@ import faker from 'faker/locale/zh_CN';
 
 export const mockObjectData = (properties, definitions) => {
   const mockData = {};
-  for (const property in properties) {
+  Object.keys(properties).forEach((property) => {
     const config = properties[property];
     const { $ref, type } = config;
     let data;
@@ -36,14 +36,10 @@ export const mockObjectData = (properties, definitions) => {
           }
           const refPath = items.$ref?.replace('#/definitions/', '');
           if (refPath) {
-            const schemaConfig = definitions[refPath];
-            console.log(': --------------------------------------------');
-            console.log('mockObjectData -> schemaConfig', schemaConfig);
-            console.log(': --------------------------------------------');
             data = mockArrayData(data, definitions, refPath);
           }
         } else {
-          data = [];
+          data = Array.from({ length: 5 }).map(() => basisTypeData(config));
         }
         break;
       default:
@@ -58,7 +54,8 @@ export const mockObjectData = (properties, definitions) => {
         break;
     }
     mockData[property] = data;
-  }
+  });
+
   return mockData;
 };
 

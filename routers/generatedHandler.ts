@@ -80,7 +80,6 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
         /* 覆盖之前默认的 */
         routers[operationId] = (req: Request, res: Response) => {
           const { url, method, headers, query, body } = req;
-          console.log(' body, query', body, query);
           const payLoad = method === 'GET' ? query : body;
 
           let code: Code = Code.Success;
@@ -105,7 +104,6 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
           } else {
             /* 提取必须参数 */
             requiredParameters = parameters.filter((parameters) => parameters.required);
-            console.log('requiredParameters', requiredParameters);
           }
 
           // 参数错误
@@ -113,15 +111,9 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
             requiredParameters.forEach((requiredParameter) => {
               const { name } = requiredParameter;
               const payloadKey = requiredParameter.in;
-              console.log(': ------------------------------------------');
-              console.log('generatedHandler -> payloadKey', payloadKey);
-              console.log(': ------------------------------------------');
               switch (payloadKey) {
                 case 'header':
                   const val = headers[name];
-                  console.log(': ----------------------------');
-                  console.log('generatedHandler -> val', val);
-                  console.log(': ----------------------------');
                   if (!val) {
                     response.header[name] = `请求头请携带${name}参数`;
                   }
@@ -139,18 +131,17 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
                   const refUrl = $ref?.replace('#/definitions/', '');
                   const schemaConfig = definitions[refUrl];
                   response.schemaConfig = schemaConfig;
-                  const data = validateRequestBody(schemaConfig);
+                  const data = validateRequestBody(payLoad, schemaConfig, definitions);
                   console.log(': ------------------------------');
                   console.log('generatedHandler -> data', data);
                   console.log(': ------------------------------');
-                  // response.data = validateRequestBody(schemaConfig);
+                  response.data = data;
 
                   break;
                 default:
                   break;
               }
             });
-            console.log('response.data', response.data);
 
             if (Object.keys(response.data).length) {
               code = Code.ParameterError;
@@ -181,13 +172,9 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
               const $ref = responses[statusCode]?.schema?.$ref;
               const refUrl = $ref.replace('#/definitions/', '');
               const schemaConfig = definitions[refUrl];
-              console.log(': ----------------------------------------------');
-              console.log('generatedHandler -> schemaConfig', schemaConfig);
-              console.log(': ----------------------------------------------');
               response.data = {
                 ...mockResponseData(schemaConfig, definitions),
               };
-              console.log('response', response);
 
               return res.json(response);
             default:
