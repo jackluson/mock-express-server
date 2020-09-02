@@ -53,7 +53,9 @@ function onError(error: any) {
 
 const createServer = async (app: express.Application) => {
   const apiDefinitionJson = await getSwaggerConfig();
-  apiDefinitionJson.basePath = '/mock-api';
+  apiDefinitionJson.definitions.SalaryFieldAuthSubAdminDto.properties.authDeptList.items.$ref = undefined;
+  apiDefinitionJson.basePath = '/oa';
+
   // Create mock functions based on swaggerConfig
   generatedHandler(routers, apiDefinitionJson);
   const connectSwagger = connector(routers, apiDefinitionJson);

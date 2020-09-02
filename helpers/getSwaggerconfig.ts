@@ -3,7 +3,7 @@ import { promisify } from 'util';
 import axios from 'axios';
 const client = redis.createClient(6379, '127.0.0.1');
 let flag = true;
-client.on('error', function(err) {
+client.on('error', function (err) {
   flag = false;
   console.log('err', err);
 });

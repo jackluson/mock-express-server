@@ -49,7 +49,7 @@ const filterPath = (paths: Record<string, any>, filterTagsStr: string) => {
  * @param {*} swaggerConfig
  * @param {string} [filterTagsStr='']
  */
-const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相关接口') => {
+const generatedHandler = (routers, swaggerConfig, filterTagsStr = ' （薪酬）人事权限相关接口') => {
   const { paths, definitions } = swaggerConfig;
 
   const code = Code.Success;
@@ -64,6 +64,9 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
   return res.json(response);
 `;
   const filterPaths = filterTagsStr ? filterPath(paths, filterTagsStr) : paths;
+  console.log(': --------------------------------------------');
+  console.log('generatedHandler -> filterPaths', filterPaths);
+  console.log(': --------------------------------------------');
   /* 遍历赋值routers */
   for (const path in filterPaths) {
     const pathConfig = filterPaths[path];
@@ -90,8 +93,8 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
               method,
               [method === 'GET' ? 'query' : 'body']: payLoad,
             },
-            data: {},
-            header: {},
+            data: undefined,
+            header: undefined,
           };
 
           // 没有权限
@@ -115,13 +118,16 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
                 case 'header':
                   const val = headers[name];
                   if (!val) {
+                    if (!response.header) {
+                      response.header = {};
+                    }
                     response.header[name] = `请求头请携带${name}参数`;
                   }
                   break;
                 case 'query':
                   const qureyVal = query[name];
                   if (!qureyVal) {
-                    response.data[name] = `${name}参数缺失`;
+                    response.parametersErrorObj[name] = `${name}参数缺失`;
                   }
                   break;
                 case 'body':
@@ -132,10 +138,7 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
                   const schemaConfig = definitions[refUrl];
                   response.schemaConfig = schemaConfig;
                   const data = validateRequestBody(payLoad, schemaConfig, definitions);
-                  console.log(': ------------------------------');
-                  console.log('generatedHandler -> data', data);
-                  console.log(': ------------------------------');
-                  response.data = data;
+                  response.parametersErrorObj = data;
 
                   break;
                 default:
@@ -143,8 +146,9 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = '花名册相�
               }
             });
 
-            if (Object.keys(response.data).length) {
+            if (Object.keys(response.parametersErrorObj || response.header || {}).length) {
               code = Code.ParameterError;
+              response['message'] = 'parameters error';
             }
           }
 
