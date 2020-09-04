@@ -5,10 +5,20 @@ import morgan from 'morgan';
 import bodyParser from 'body-parser';
 import { connector, summarise } from 'swagger-routes-express';
 import * as routers from './routers';
-import generatedHandler from './routers/generatedHandler';
+import { walk } from './utils/index';
+import chalk from 'chalk';
+import _ from 'lodash';
+import generateRouterHandler from './routers/generateRouterHandler';
+import { customizeMergeSwaggerConfig } from './helpers';
 import getSwaggerConfig from './helpers/getSwaggerConfig';
 
 const app = express();
+const log = (...params) => {
+  const parseParams = JSON.parse(JSON.stringify(params));
+  console.log(...parseParams);
+};
+
+// Combine styled and normal strings
 const port = 9009;
 // Logger
 app.use(morgan('dev'));
@@ -51,17 +61,40 @@ function onError(error: any) {
   }
 }
 
-const createServer = async (app: express.Application) => {
+const mergeDefinition = async (configPath) => {
+  let fileDefinitionJson;
+  if (configPath) {
+    const filePaths = await walk(configPath).catch((err) => {
+      log(chalk.red(err));
+    });
+    for (const filePath of filePaths) {
+      const absolutePath = __dirname + '\\' + filePath;
+      const { default: curConfig } = await import(absolutePath);
+      fileDefinitionJson = _.mergeWith(fileDefinitionJson || {}, curConfig, customizeMergeSwaggerConfig);
+    }
+  }
+
   const apiDefinitionJson = await getSwaggerConfig();
-  apiDefinitionJson.definitions.SalaryFieldAuthSubAdminDto.properties.authDeptList.items.$ref = undefined;
-  apiDefinitionJson.basePath = '/oa';
+
+  const mergeDefinitionJson = _.mergeWith(fileDefinitionJson || {}, apiDefinitionJson, customizeMergeSwaggerConfig);
+  return mergeDefinitionJson;
+};
+
+const configPath = 'config';
+
+const createServer = async (app: express.Application) => {
+  const mergeDefinitionJson = await mergeDefinition(configPath);
+  console.log(`: --------------------------------------------------------`);
+  console.log(`createServer -> mergeDefinitionJson`, mergeDefinitionJson);
+  console.log(`: --------------------------------------------------------`);
 
   // Create mock functions based on swaggerConfig
-  generatedHandler(routers, apiDefinitionJson);
-  const connectSwagger = connector(routers, apiDefinitionJson);
+  const mockRouters = generateRouterHandler(mergeDefinitionJson);
+  const mergeRouter = Object.assign({}, routers, mockRouters);
+  const connectSwagger = connector(mergeRouter, mergeDefinitionJson);
   connectSwagger(app);
   // Print swagger router api summary
-  const apiSummary = summarise(apiDefinitionJson);
+  const apiSummary = summarise(mergeDefinitionJson);
   // Catch 404 error
   app.use((req: any, res: any) => {
     const err = new Error('Not Found');
@@ -77,7 +110,6 @@ const createServer = async (app: express.Application) => {
   // Listen on provided port, on all network interfaces.
   server.listen(port);
   server.on('error', onError);
-  console.log('Mock server started on port ' + port + '!');
 };
 
 createServer(app);

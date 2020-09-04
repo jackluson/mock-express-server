@@ -1,4 +1,4 @@
-import { Code } from '../routers/generatedHandler';
+import { Code } from '../routers/generateRouterHandler';
 import { OpenAPI2SchemaObject } from '@manifoldco/swagger-to-ts/dist-types/types';
 
 type Data = {

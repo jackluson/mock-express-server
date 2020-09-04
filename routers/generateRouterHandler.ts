@@ -49,7 +49,8 @@ const filterPath = (paths: Record<string, any>, filterTagsStr: string) => {
  * @param {*} swaggerConfig
  * @param {string} [filterTagsStr='']
  */
-const generatedHandler = (routers, swaggerConfig, filterTagsStr = ' （薪酬）人事权限相关接口') => {
+const generateRouterHandler = (swaggerConfig, filterTagsStr = ' （薪酬）人事权限相关接口') => {
+  const routers = {};
   const { paths, definitions } = swaggerConfig;
 
   const code = Code.Success;
@@ -102,6 +103,7 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = ' （薪酬）
           let requiredParameters = [];
           if (!authorization) {
             code = Code.Unlogin;
+            response.data = {};
             response.data['message'] = 'authorized error, please login again';
             response.data['code'] = code;
           } else {
@@ -127,18 +129,25 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = ' （薪酬）
                 case 'query':
                   const qureyVal = query[name];
                   if (!qureyVal) {
+                    response.parametersErrorObj = {};
                     response.parametersErrorObj[name] = `${name}参数缺失`;
                   }
                   break;
                 case 'body':
                   const {
                     schema: { $ref },
+                    required,
                   } = requiredParameter;
-                  const refUrl = $ref?.replace('#/definitions/', '');
-                  const schemaConfig = definitions[refUrl];
-                  response.schemaConfig = schemaConfig;
-                  const data = validateRequestBody(payLoad, schemaConfig, definitions);
-                  response.parametersErrorObj = data;
+                  if (required && Object.keys(payLoad || {}).length === 0) {
+                    code = Code.ParameterError;
+                    response['message'] = 'parameters missed';
+                  } else {
+                    const refUrl = $ref?.replace('#/definitions/', '');
+                    const schemaConfig = definitions[refUrl];
+                    response.schemaConfig = schemaConfig;
+                    const data = validateRequestBody(payLoad, schemaConfig, definitions);
+                    response.parametersErrorObj = data;
+                  }
 
                   break;
                 default:
@@ -188,6 +197,7 @@ const generatedHandler = (routers, swaggerConfig, filterTagsStr = ' （薪酬）
       }
     }
   }
+  return routers;
 };
 
-export default generatedHandler;
+export default generateRouterHandler;

@@ -1,0 +1,437 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "供应链",
+    "version": "last"
+  },
+  "basePath": "/",
+  "tags": [
+    {
+      "name": " （薪酬）人事权限相关接口",
+      "description": "公共分类"
+    },
+    {
+      "name": "寄送接口相关",
+      "description": null
+    },
+    {
+      "name": "物流查询接口",
+      "description": "Logistics Controller"
+    },
+    {
+      "name": "生成寄送单通用接口",
+      "description": "Syn Delivery Order Controller"
+    }
+  ],
+  "schemes": ["http"],
+  "paths": {
+    "/articles": {
+      "get": {
+        "tags": [" （薪酬）人事权限相关接口"],
+        "summary": "获取文章",
+        "description": "",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "description": "",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {}
+          }
+        }
+      }
+    },
+    "/v-ticket/work-order/undo": {
+      "get": {
+        "tags": [" （薪酬）人事权限相关接口"],
+        "summary": "撤销",
+        "description": "",
+        "parameters": [
+          {
+            "name": "workOrderId",
+            "in": "query",
+            "required": true,
+            "description": "工单id",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "响应码"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "响应信息"
+                },
+                "data": {
+                  "type": "string",
+                  "description": "结果数据"
+                },
+                "count": {
+                  "type": "string",
+                  "description": "记录总数"
+                }
+              },
+              "required": ["code", "message", "data", "count"]
+            }
+          }
+        }
+      }
+    },
+    "/v1/logistics/details": {
+      "get": {
+        "tags": ["物流查询接口"],
+        "summary": "根据userId获取寄送单物流信息",
+        "description": "",
+        "consumes": ["text/plain"],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "appid",
+            "in": "header",
+            "description": "appid (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "bgrul",
+            "in": "header",
+            "description": "bgrul (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ext",
+            "in": "header",
+            "description": "ext (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "seq",
+            "in": "header",
+            "description": "seq (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "sign",
+            "in": "header",
+            "description": "sign (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "description": "用户id",
+            "type": "string"
+          },
+          {
+            "name": "raw",
+            "in": "body",
+            "description": "raw paramter",
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "业务响应的数字状态码"
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "总记录数"
+                },
+                "data": {
+                  "type": "array",
+                  "description": "请求所需的业务数据",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "goods": {
+                        "type": "array",
+                        "description": "商品信息",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "description": "寄送物品编码"
+                            },
+                            "name": {
+                              "type": "string",
+                              "description": "寄送物品名称"
+                            }
+                          },
+                          "title": "商品信息",
+                          "$$ref": "#/definitions/商品信息",
+                          "required": ["code", "name"]
+                        }
+                      },
+                      "logisticsList": {
+                        "type": "array",
+                        "description": "物流信息",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "context": {
+                              "type": "string",
+                              "description": "内容"
+                            },
+                            "formatTime": {
+                              "type": "string",
+                              "description": "格式化后时间"
+                            },
+                            "time": {
+                              "type": "string",
+                              "description": "时间"
+                            }
+                          },
+                          "title": "Logistics",
+                          "$$ref": "#/definitions/Logistics"
+                        }
+                      },
+                      "trackNum": {
+                        "type": "string",
+                        "description": "物流单编号"
+                      },
+                      "userId": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "用户ID"
+                      },
+                      "userName": {
+                        "type": "string",
+                        "description": "用户名称"
+                      }
+                    },
+                    "title": "商品物流信息",
+                    "$$ref": "#/definitions/商品物流信息"
+                  }
+                },
+                "message": {
+                  "type": "string",
+                  "description": "业务响应的消息文本字符串"
+                }
+              },
+              "title": "BaseResult«List«商品物流信息»»",
+              "$$ref": "#/definitions/BaseResult«List«商品物流信息»»"
+            }
+          }
+        }
+      }
+    },
+    "/v1/syn/delivery/deliveryOrder": {
+      "post": {
+        "tags": ["生成寄送单通用接口"],
+        "summary": "生成待寄送接口",
+        "description": "",
+        "consumes": ["application/json"],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Authorization (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "appid",
+            "in": "header",
+            "description": "appid (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "bgrul",
+            "in": "header",
+            "description": "bgrul (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "ext",
+            "in": "header",
+            "description": "ext (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "seq",
+            "in": "header",
+            "description": "seq (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "sign",
+            "in": "header",
+            "description": "sign (Only:undefined)",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "root",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "addressDetail",
+                "appId",
+                "city",
+                "classType",
+                "consignee",
+                "countryCode",
+                "countryName",
+                "goods",
+                "mobile",
+                "province",
+                "userId"
+              ],
+              "properties": {
+                "addressDetail": {
+                  "type": "string",
+                  "description": "详细地址"
+                },
+                "appId": {
+                  "type": "string",
+                  "description": "所属appId，长度限制100字母，调用方如怕重复创建，appId后可附加业务唯一标识：格式4455254785__128，双下划线前是appid， 双下滑线后为业务唯一标识，如有重复，系统会提示重复 "
+                },
+                "area": {
+                  "type": "string",
+                  "description": "区"
+                },
+                "businessKey": {
+                  "type": "string",
+                  "description": "合同订单号"
+                },
+                "city": {
+                  "type": "string",
+                  "description": "市"
+                },
+                "classType": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "classType 258：数学思维2019，748：数学思维2020 2：轻课 3：礼品"
+                },
+                "consignee": {
+                  "type": "string",
+                  "description": "收件人名称"
+                },
+                "countryCode": {
+                  "type": "string",
+                  "description": "国家区号如86是中国"
+                },
+                "countryName": {
+                  "type": "string",
+                  "description": "国家名称"
+                },
+                "goods": {
+                  "type": "array",
+                  "description": "商品信息",
+                  "items": {
+                    "type": "object",
+                    "required": ["code", "name"],
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "description": "寄送物品编码"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "寄送物品名称"
+                      }
+                    },
+                    "title": "商品信息",
+                    "$$ref": "#/definitions/商品信息"
+                  }
+                },
+                "mobile": {
+                  "type": "string",
+                  "description": "收件人手机号"
+                },
+                "province": {
+                  "type": "string",
+                  "description": "省份"
+                },
+                "remark": {
+                  "type": "string",
+                  "description": "备注，长度限制：纯汉字100个，纯字母300个"
+                },
+                "userId": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "用户ID"
+                }
+              },
+              "title": "入参",
+              "$$ref": "#/definitions/入参"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "integer",
+                  "format": "int32",
+                  "description": "业务响应的数字状态码"
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "总记录数"
+                },
+                "data": {
+                  "type": "object",
+                  "description": "请求所需的业务数据",
+                  "properties": {}
+                },
+                "message": {
+                  "type": "string",
+                  "description": "业务响应的消息文本字符串"
+                }
+              },
+              "title": "BaseResult",
+              "$$ref": "#/definitions/BaseResult"
+            }
+          }
+        }
+      }
+    }
+  }
+}
