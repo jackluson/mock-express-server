@@ -64,13 +64,15 @@ function onError(error: any) {
 const mergeDefinition = async (configPath) => {
   let fileDefinitionJson;
   if (configPath) {
-    const filePaths = await walk(configPath).catch((err) => {
-      log(chalk.red(err));
-    });
-    for (const filePath of filePaths) {
-      const absolutePath = __dirname + '\\' + filePath;
-      const { default: curConfig } = await import(absolutePath);
-      fileDefinitionJson = _.mergeWith(fileDefinitionJson || {}, curConfig, customizeMergeSwaggerConfig);
+    try {
+      const filePaths = await walk(configPath);
+      for (const filePath of filePaths) {
+        const absolutePath = __dirname + '\\' + filePath;
+        const { default: curConfig } = await import(absolutePath);
+        fileDefinitionJson = _.mergeWith(fileDefinitionJson || {}, curConfig, customizeMergeSwaggerConfig);
+      }
+    } catch (error) {
+      log(chalk.red(error));
     }
   }
 
@@ -80,21 +82,17 @@ const mergeDefinition = async (configPath) => {
   return mergeDefinitionJson;
 };
 
-const configPath = 'config';
+const configPath = 'local';
 
 const createServer = async (app: express.Application) => {
   const mergeDefinitionJson = await mergeDefinition(configPath);
-  console.log(`: --------------------------------------------------------`);
-  console.log(`createServer -> mergeDefinitionJson`, mergeDefinitionJson);
-  console.log(`: --------------------------------------------------------`);
-
   // Create mock functions based on swaggerConfig
   const mockRouters = generateRouterHandler(mergeDefinitionJson);
   const mergeRouter = Object.assign({}, routers, mockRouters);
   const connectSwagger = connector(mergeRouter, mergeDefinitionJson);
   connectSwagger(app);
   // Print swagger router api summary
-  const apiSummary = summarise(mergeDefinitionJson);
+  // const apiSummary = summarise(mergeDefinitionJson);
   // Catch 404 error
   app.use((req: any, res: any) => {
     const err = new Error('Not Found');

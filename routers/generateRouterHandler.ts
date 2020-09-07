@@ -65,9 +65,6 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = ' （薪酬）人�
   return res.json(response);
 `;
   const filterPaths = filterTagsStr ? filterPath(paths, filterTagsStr) : paths;
-  console.log(': --------------------------------------------');
-  console.log('generatedHandler -> filterPaths', filterPaths);
-  console.log(': --------------------------------------------');
   /* 遍历赋值routers */
   for (const path in filterPaths) {
     const pathConfig = filterPaths[path];
@@ -118,19 +115,21 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = ' （薪酬）人�
               const payloadKey = requiredParameter.in;
               switch (payloadKey) {
                 case 'header':
-                  const val = headers[name];
+                  const ignoreName = name.toLowerCase();
+
+                  const val = headers[ignoreName];
                   if (!val) {
                     if (!response.header) {
                       response.header = {};
                     }
-                    response.header[name] = `请求头请携带${name}参数`;
+                    response.header[name] = `please catch ${name} params in header`;
                   }
                   break;
                 case 'query':
                   const qureyVal = query[name];
                   if (!qureyVal) {
                     response.parametersErrorObj = {};
-                    response.parametersErrorObj[name] = `${name}参数缺失`;
+                    response.parametersErrorObj[name] = `${name} param missed`;
                   }
                   break;
                 case 'body':
@@ -182,12 +181,19 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = ' （薪酬）人�
             case Code.Success:
               response.code = code;
               const statusCode = '200';
-              const $ref = responses[statusCode]?.schema?.$ref;
-              const refUrl = $ref.replace('#/definitions/', '');
-              const schemaConfig = definitions[refUrl];
-              response.data = {
-                ...mockResponseData(schemaConfig, definitions),
-              };
+              const schema = responses[statusCode]?.schema;
+              const { $ref } = responses[statusCode]?.schema;
+              if ($ref) {
+                const refUrl = $ref.replace('#/definitions/', '');
+                const schemaConfig = definitions[refUrl];
+                response.data = {
+                  ...mockResponseData(schemaConfig, definitions),
+                };
+              } else if (schema) {
+                response.data = {
+                  ...mockResponseData(schema, definitions),
+                };
+              }
 
               return res.json(response);
             default:

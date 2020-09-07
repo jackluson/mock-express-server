@@ -63,12 +63,23 @@ export const basisTypeData = (config) => {
     case 'string':
       data = faker.random.words();
       break;
+    case 'integer':
     case 'int32':
     case 'int64':
       data = faker.random.number();
       break;
+    case 'double':
+    case 'float':
+      data = Math.random();
+      break;
+    case 'boolean':
+      data = faker.random.boolean();
+      break;
     case 'date-time':
       data = String(faker.date.past());
+      break;
+    case 'null':
+      data = null;
       break;
     default:
       break;
@@ -77,44 +88,33 @@ export const basisTypeData = (config) => {
 };
 
 export const handleArrayTypeCondition = (config, definitions) => {
-  let data;
   let { items } = config;
-  // eslint-disable-next-line no-case-declarations
-  const refUrl = items?.$ref?.replace('#/definitions/', '');
-  if (refUrl) {
-    const schemaConfig = definitions[refUrl];
-    data = Array.from({ length: 5 }).map(() => mockResponseData(schemaConfig, definitions));
-  } else if (items.items) {
-    data = Array.from({ length: 3 });
-
+  let data: any[] = Array.from({ length: 3 });
+  if (items.items) {
     while (items.items) {
       data.forEach(function (_item, index) {
         data[index] = Array.from({ length: 2 });
       });
       items = items.items;
     }
-    const { type, $ref } = items;
-    const refPath = $ref?.replace('#/definitions/', '');
-    if (refPath) {
-      data = mockArrayData(data, definitions, refPath);
-    }
-  } else if (items.type === 'object') {
-    data = Array.from({ length: 4 }).map(() => mockResponseData(items, definitions));
-  } else {
-    data = Array.from({ length: 5 }).map(() => basisTypeData(config));
   }
+  data = mockArrayData(data, definitions, items);
   return data;
 };
 
-export const mockArrayData = (arr: [], definitions, refPath) => {
+export const mockArrayData = (arr: any[], definitions, config) => {
+  const { $ref } = config;
+  const refPath = $ref?.replace('#/definitions/', '');
+
   if (Array.isArray(arr)) {
     const mockDataList = [];
+    /* traverse to fill array member data */
     arr.reduce((acc, cur, index) => {
       if (Array.isArray(cur)) {
-        acc[index] = mockArrayData(cur, definitions, refPath);
+        acc[index] = mockArrayData(cur, definitions, config);
       } else {
-        const schemaConfig = definitions[refPath];
-        acc[index] = mockResponseData(schemaConfig, definitions);
+        const curConfig = refPath ? definitions[refPath] : config;
+        acc[index] = mockResponseData(curConfig, definitions);
       }
       return acc;
     }, mockDataList);
