@@ -24,7 +24,14 @@ export const mockResponseData = (schemaConfig, definitions) => {
   return mockData;
 };
 
-export const mockObjectData = (properties, definitions) => {
+/**
+ * mock object type data
+ *
+ * @param {*} properties
+ * @param {*} definitions
+ * @returns object data
+ */
+const mockObjectData = (properties, definitions) => {
   const mockData = {};
   Object.keys(properties).forEach((property) => {
     const config = properties[property];
@@ -55,7 +62,13 @@ export const mockObjectData = (properties, definitions) => {
   return mockData;
 };
 
-export const basisTypeData = (config) => {
+/**
+ * mock basic type data exclude array object
+ *
+ * @param {*} config
+ * @returns basic type data
+ */
+const basisTypeData = (config) => {
   const { type, format } = config;
   let data;
   const typeOrformat = format || type;
@@ -87,7 +100,14 @@ export const basisTypeData = (config) => {
   return data;
 };
 
-export const handleArrayTypeCondition = (config, definitions) => {
+/**
+ * mock array type data
+ *
+ * @param {*} config
+ * @param {*} definitions
+ * @returns array
+ */
+const handleArrayTypeCondition = (config, definitions) => {
   let { items } = config;
   let data: any[] = Array.from({ length: 3 });
   if (items.items) {
@@ -102,7 +122,15 @@ export const handleArrayTypeCondition = (config, definitions) => {
   return data;
 };
 
-export const mockArrayData = (arr: any[], definitions, config) => {
+/**
+ * fill array member data
+ *
+ * @param {any[]} arr
+ * @param {*} definitions
+ * @param {*} config
+ * @returns
+ */
+const mockArrayData = (arr: any[], definitions, config) => {
   const { $ref } = config;
   const refPath = $ref?.replace('#/definitions/', '');
 

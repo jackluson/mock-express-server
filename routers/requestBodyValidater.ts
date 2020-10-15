@@ -5,41 +5,58 @@
  * File Created: Tuesday, 18th August 2020 10:42:03 am
  */
 
+import { Primitive } from 'type-fest';
+
 export const validateRequestBody = (payLoad, schemaConfig, definitions) => {
-  const { type, properties } = schemaConfig;
+  const { type, properties, required = [] } = schemaConfig;
+  console.log(`: ---------------------------------`);
+  console.log(`validateRequestBody -> type`, type);
+  console.log(`: ---------------------------------`);
   const payLoadType = typeof payLoad;
   let resquestBodyData: any;
-  if (type !== payLoadType) {
-    return 'data type not meet';
+  if (payLoadType === 'object' && type !== payLoadType) {
+    return 'the data type not meet';
   }
   switch (type) {
     case 'object':
-      resquestBodyData = validateBodyProperties(payLoad, properties, definitions);
+      resquestBodyData = validateBodyProperties(payLoad, properties, definitions, required);
       break;
-
+    case 'array':
+      resquestBodyData = handleArrayTypeCondition(payLoad, schemaConfig, definitions);
+      break;
     default:
+      resquestBodyData = validateBasisTypeProperty(payLoad, schemaConfig);
       break;
   }
   return resquestBodyData;
 };
 
-export const validateBodyProperties = (payLoad, properties, definitions) => {
-  let requestBodyValidateData;
+/**
+ * validate object data
+ * @param {*} payLoad
+ * @param {*} properties
+ * @param {*} definitions
+ * @param {*} [requiredArray=[]]
+ * @returns
+ */
+export const validateBodyProperties = (payLoad, properties, definitions, requiredArray = []) => {
+  let requestBodyValidateData = undefined;
 
   Object.keys(properties).forEach((property) => {
     const config = properties[property];
     const payLoadChild = payLoad[property];
+    const isRequired = requiredArray.includes(property);
 
-    const { $ref, type, required } = config;
+    const { $ref, type, required, properties: childProperties = {} } = config;
     let propertyInfo;
     /* exclude 0 false */
     if (!['', null, undefined].includes(payLoadChild)) {
       switch (type) {
         case 'object':
-          propertyInfo = validateBodyProperties(payLoadChild, config.properties || {}, definitions);
+          propertyInfo = validateBodyProperties(payLoadChild, childProperties, definitions, required);
           break;
         case 'array':
-          propertyInfo = this.validaArrayTypeProperty(payLoad, config, property, definitions);
+          propertyInfo = handleArrayTypeCondition(payLoad[property], config, definitions, property, isRequired);
           break;
         default:
           // eslint-disable-next-line no-case-declarations
@@ -48,12 +65,12 @@ export const validateBodyProperties = (payLoad, properties, definitions) => {
             const schemaConfig = definitions[refPath];
             propertyInfo = validateBodyProperties(payLoadChild, schemaConfig, definitions);
           } else {
-            propertyInfo = validateBasisTypeProperty(payLoadChild, config, property);
+            propertyInfo = validateBasisTypeProperty(payLoadChild, config, isRequired);
           }
           break;
       }
-    } else if (required) {
-      propertyInfo = 'the params is missed';
+    } else if (required === true || isRequired) {
+      propertyInfo = `the param [${config.description || ''}] is required, but not is missed`;
     }
 
     if (propertyInfo) {
@@ -66,81 +83,111 @@ export const validateBodyProperties = (payLoad, properties, definitions) => {
   return requestBodyValidateData;
 };
 
-export const validaArrayTypeProperty = (payLoad, config, property, definitions) => {
+/**
+ * validate array data
+ * @param {*} payLoad
+ * @param {*} property
+ * @param {*} config
+ * @param {*} definitions
+ * @param {*} isRequired
+ * @returns
+ */
+export const handleArrayTypeCondition = (
+  payLoadArr: any[],
+  config: Record<string, any>,
+  definitions,
+  property?: string,
+  isRequired?,
+) => {
   let propertyInfo;
-  const payLoadChild = payLoad[property];
-  const { required } = config;
-  let { items } = config;
+  const { required = isRequired } = config;
 
+  let { items } = config;
   // not empty
-  if (payLoadChild) {
+  if (payLoadArr) {
     // if not array type data
-    if (!(payLoadChild instanceof Array)) {
+    if (!(payLoadArr instanceof Array)) {
       propertyInfo = `the params need array type data--[${config.description || ''}]`;
       return propertyInfo;
-    } else if (payLoadChild.length < 1 && required) {
+    } else if (payLoadArr.length === 0 && required) {
       propertyInfo = `the params is empty --[${config.description || ''}]`;
       return propertyInfo;
     }
 
-    const refUrl = items.$ref?.replace('#/definitions/', '');
-    // const refUrl = 'BatchDepartLeaderQueryDto';
-    if (refUrl) {
-      const schemaConfig = definitions[refUrl];
-      const payLoadChildrenData = payLoadChild.map((item) => validateRequestBody(item, schemaConfig, definitions));
-      propertyInfo = payLoadChildrenData.some((payLoadChildData) => !!payLoadChildData)
-        ? payLoadChildrenData
-        : undefined;
-    } else if (items.items) {
-      let payLoadData = payLoadChild;
+    if (items.items) {
+      let payLoadData = payLoadArr;
       while (items.items) {
         /* if required */
         if (items.required && payLoadData.length < 1) {
-          propertyInfo = 'params is missed';
+          propertyInfo = 'the param is missed';
           return propertyInfo;
         }
         /* traverse every item */
-        propertyInfo = payLoadData.map((payLoadChildItem) => {
-          return Array.isArray(payLoadChildItem) ? '' : `${property} has member data type error`;
+        propertyInfo = payLoadData.map((payLoadChildItem, index) => {
+          return Array.isArray(payLoadChildItem) ? '' : `the member[${index}] data type error`;
         });
-        if (propertyInfo.toString()) return propertyInfo;
-        /* flaten 第一层 */
+        if (propertyInfo.join('')) return propertyInfo;
+        /* flatten 第一层 */
+
         payLoadData = payLoadData.reduce((acc, cur) => {
           acc = acc.concat(cur);
           return acc;
         }, []);
+
         items = items.items;
       }
+
       const refPath = items.$ref?.replace('#/definitions/', '');
       if (refPath) {
         const schemaConfig = definitions[refPath];
+
         const payLoadChildrenData = payLoadData.map((item) => validateRequestBody(item, schemaConfig, definitions));
         propertyInfo = payLoadChildrenData.some((payLoadChildData) => !!payLoadChildData)
           ? payLoadChildrenData
           : undefined;
       } else {
-        // basic type
-        if (payLoadData.some((item) => validateBasisTypeProperty(item, items, property))) {
+        if (payLoadData.some((item) => validateBasisTypeProperty(item, items))) {
           propertyInfo = `${property} params data have member isn't fill data type --[${config.description || ''}]`;
         }
       }
     } else {
-      if (payLoadChild.some((item) => validateBasisTypeProperty(item, items, property))) {
-        propertyInfo = `${property} params data have member isn't fill data type --[${config.description || ''}]`;
+      console.log('payLoadData', payLoadArr);
+
+      const refUrl = items.$ref?.replace('#/definitions/', '');
+      const schemaConfig = refUrl ? definitions[refUrl] : items;
+      const payLoadChildValidRes = [];
+      for (const payLoadChildItem of payLoadArr) {
+        payLoadChildValidRes.push(validateRequestBody(payLoadChildItem, schemaConfig, definitions));
+      }
+      if (payLoadChildValidRes.join('')) {
+        propertyInfo = payLoadChildValidRes;
       }
     }
     /* required but is missing  */
-  } else if (!payLoadChild && required) {
+  } else if (required) {
     propertyInfo = 'it require array data but missing';
   }
-  return propertyInfo?.toString() ? propertyInfo : undefined;
+
+  return propertyInfo;
 };
 
-const validateBasisTypeProperty = (value, config, property) => {
-  const { type, format, description, required } = config;
+/**
+ * validate basic type data
+ *
+ * @param {*} value basic type value
+ * @param {*} config value config
+ * @param {*} [isRequired]
+ * @returns validate value result or undefined
+ */
+const validateBasisTypeProperty = (
+  value: Exclude<Primitive, symbol | bigint>,
+  config: Record<string, Exclude<Primitive, symbol>>,
+  isRequired?: boolean,
+) => {
+  const { type, format, description, required = isRequired } = config;
 
   if (value === undefined) {
-    return required ? `${property}<${type}> is required--[${description || ''}]` : undefined;
+    return required ? `the param [${description || ''}] is required, but not is missed` : undefined;
   }
   const valueType = typeof value;
   const typeOrformat = format || type;
@@ -151,19 +198,27 @@ const validateBasisTypeProperty = (value, config, property) => {
         latch = true;
       }
       break;
+    case 'integer':
     case 'int32':
     case 'int64':
+    case 'double':
+    case 'float':
       if (valueType !== 'number') {
         latch = true;
       }
       break;
+    case 'boolean':
+      if (valueType !== 'boolean') {
+        latch = true;
+      }
+      break;
     case 'date-time':
-      latch = isNaN(Date.parse(new Date(value).toString()));
+      latch = valueType !== 'boolean' && isNaN(Date.parse(new Date(value as any).toString()));
       break;
     default:
       break;
   }
   if (latch) {
-    return `${property} params type doesn't meet require  [${typeOrformat}]--[${config.description || ''}]`;
+    return `the param [${description || ''}] doesn't meet type data , it need ${typeOrformat} type`;
   }
 };
