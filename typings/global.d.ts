@@ -5,6 +5,7 @@ type Data = {
   code?: number;
   message?: string;
   data?: Record<string, any>;
+  [key: string]: any;
 };
 
 declare interface MockResponse {

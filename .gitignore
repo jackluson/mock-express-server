@@ -4,6 +4,7 @@ node_modules
 /local
 /http
 /demo
+/uploads
 package-lock.json
 yarn.lock
 

@@ -6,10 +6,12 @@
  * File Created: Wednesday, 5th August 2020 4:15:14 pm
  */
 
-import { Response, Request } from 'express';
+import { Response, Request, NextFunction } from 'express';
 import { MockResponse } from 'typings/global';
 import { mockResponseData } from './mockTypeData';
 import { validateRequestBody } from './requestBodyValidater';
+import formidable from 'formidable';
+const form = formidable({ multiples: true });
 
 export enum Code {
   Unlogin = 10001,
@@ -18,6 +20,8 @@ export enum Code {
   Unknown,
   Success = 30000,
 }
+
+const RequestBodyMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
 /**
  * 依据tag过滤Paths
@@ -49,7 +53,7 @@ const filterPath = (paths: Record<string, any>, filterTagsStr: string) => {
  * @param {*} swaggerConfig
  * @param {string} [filterTagsStr='']
  */
-const generateRouterHandler = (swaggerConfig, filterTagsStr = ' （薪酬）人事权限相关接口') => {
+const generateRouterHandler = (swaggerConfig, filterTagsStr = '') => {
   const routers = {};
   const { paths, definitions } = swaggerConfig;
 
@@ -72,17 +76,18 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = ' （薪酬）人�
     /* 不同请求方法，对应不同handler */
     for (const method of methods) {
       const handlerConfig = pathConfig[method];
-      const { operationId, responses, parameters } = handlerConfig;
+      const { operationId, responses, parameters, consumes = [] } = handlerConfig;
       if (operationId) {
         /* 首先统一默认赋值handler */
         routers[operationId] = new Function('req', 'res', functionBody);
       }
       if (responses) {
         /* 覆盖之前默认的 */
-        routers[operationId] = (req: Request, res: Response) => {
-          const { url, method, headers, query, body } = req;
-          const payLoad = method === 'GET' ? query : body;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        routers[operationId] = async (req: Request, res: Response, next: NextFunction) => {
+          const { url, method, headers, query, params, body } = req;
 
+          const payLoad = RequestBodyMethods.includes(method) ? body : query;
           let code: Code = Code.Success;
           const response: MockResponse = {
             code,
@@ -94,72 +99,121 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = ' （薪酬）人�
             data: undefined,
             header: undefined,
           };
-
-          // 没有权限
           const { authorization } = headers;
-          let requiredParameters = [];
+
+          // no has anthoriztion
           if (!authorization) {
             code = Code.Unlogin;
             response.data = {};
             response.data['message'] = 'authorized error, please login again';
             response.data['code'] = code;
           } else {
-            /* 提取必须参数 */
-            requiredParameters = parameters.filter((parameters) => parameters.required);
-          }
+            let checkType = 'body';
+            // 处理multipart/form-data类型
+            if (headers['content-type'].includes('multipart/form-data')) {
+              await new Promise((resolve) => {
+                // 不校验文件字段， 校验其他字段
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                form.parse(req, (err, fields, files) => {
+                  if (err) {
+                    resolve(err);
+                    return;
+                  }
+                  checkType = 'query'; //其他字段放在query校验
+                  Object.assign(query, fields);
+                  resolve();
+                });
+              });
+            }
+            //   TODO:  parameters:
+            // - $ref: '#/parameters/offsetParam'
+            // - $ref: '#/parameters/limitParam'
+            // abstract require params && body params
+            const requiredParameters = parameters.filter(
+              (parameters) => parameters.required || parameters.in === checkType,
+            );
 
-          // 参数错误
-          if (requiredParameters.length > 0) {
-            requiredParameters.forEach((requiredParameter) => {
-              const { name } = requiredParameter;
-              const payloadKey = requiredParameter.in;
-              switch (payloadKey) {
-                case 'header':
-                  const ignoreName = name.toLowerCase();
+            // 参数错误
+            if (requiredParameters.length > 0) {
+              let responseKey;
+              requiredParameters.forEach((requiredParameter) => {
+                const { name } = requiredParameter;
+                const payloadKey = requiredParameter.in;
+                let responseKeyVal;
+                switch (payloadKey) {
+                  case 'header':
+                    const ignoreName = name.toLowerCase();
 
-                  const val = headers[ignoreName];
-                  if (!val) {
-                    if (!response.header) {
-                      response.header = {};
+                    const val = headers[ignoreName];
+                    if (!val) {
+                      responseKey = 'headerInfo';
+                      responseKeyVal = `please catch ${name} params in header`;
                     }
-                    response.header[name] = `please catch ${name} params in header`;
-                  }
-                  break;
-                case 'query':
-                  const qureyVal = query[name];
-                  if (!qureyVal) {
-                    response.parametersErrorObj = {};
-                    response.parametersErrorObj[name] = `${name} param missed`;
-                  }
-                  break;
-                case 'body':
-                  const {
-                    schema: { $ref },
-                    required,
-                  } = requiredParameter;
-                  if (required && Object.keys(payLoad || {}).length === 0) {
-                    code = Code.ParameterError;
-                    response['message'] = 'parameters missed';
-                  } else {
-                    const refUrl = $ref?.replace('#/definitions/', '');
-                    const schemaConfig = definitions[refUrl];
-                    response.schemaConfig = schemaConfig;
-                    const data = validateRequestBody(payLoad, schemaConfig, definitions);
-                    response.parametersErrorObj = data;
-                  }
+                    break;
+                  case 'query':
+                    const qureyVal = query[name];
+                    // only check if has the field
+                    if (!qureyVal) {
+                      responseKey = 'queryInfo';
+                      responseKeyVal = `the ${name} param missed`;
+                    }
+                    break;
+                  case 'path':
+                    const paramVal = params[name];
+                    if (!paramVal) {
+                      responseKey = 'paramInfo';
+                      responseKeyVal = `the ${name} param missed`;
+                    }
+                    break;
+                  case 'body':
+                    if (!RequestBodyMethods.includes(method)) {
+                      break;
+                    }
+                    const { schema = {} } = requiredParameter;
+                    const {
+                      schema: { $ref },
+                      required,
+                    } = requiredParameter;
 
-                  break;
-                default:
-                  break;
+                    // only post method, validate requrst body
+                    if (required && Object.keys(payLoad || {}).length === 0) {
+                      // adjust conten-type is in consumes
+                      const contentType = headers['content-type']?.replace(/([^;]*)(;.*)/, '$1');
+                      if (!consumes.includes(contentType)) {
+                        responseKey = 'headerInfo';
+                        response[responseKey] = response[responseKey] || {};
+                        response[responseKey].contentType = `Content-Type should is ${consumes}`;
+                      }
+                      response['message'] = 'body is missed';
+                      code = Code.ParameterError;
+                    } else {
+                      const refUrl = $ref?.replace('#/definitions/', '');
+                      const schemaConfig = refUrl ? definitions[refUrl] : schema;
+                      const data = validateRequestBody(payLoad, schemaConfig, definitions);
+                      if (data) {
+                        response.schemaConfig = schemaConfig;
+                        responseKey = 'bodyInfo';
+                        response[responseKey] = data;
+                      }
+                    }
+
+                    break;
+                  default:
+                    break;
+                }
+                if (responseKey && responseKeyVal) {
+                  if (!response[responseKey]) {
+                    response[responseKey] = {};
+                  }
+                  response[responseKey][name] = responseKeyVal;
+                }
+              });
+              if (responseKey) {
+                code = Code.ParameterError;
+                response['message'] = 'parameters error';
               }
-            });
-
-            if (Object.keys(response.parametersErrorObj || response.header || {}).length) {
-              code = Code.ParameterError;
-              response['message'] = 'parameters error';
             }
           }
-
           if (payLoad.redirect) {
             code = Code.Unknown;
           }
@@ -181,23 +235,17 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = ' （薪酬）人�
             case Code.Success:
               response.code = code;
               const statusCode = '200';
-              const schema = responses[statusCode]?.schema;
-              const { $ref } = responses[statusCode]?.schema;
-              if ($ref) {
-                const refUrl = $ref.replace('#/definitions/', '');
-                const schemaConfig = definitions[refUrl];
-                response.data = {
-                  ...mockResponseData(schemaConfig, definitions),
-                };
-              } else if (schema) {
-                response.data = {
-                  ...mockResponseData(schema, definitions),
-                };
-              }
+              const schema = responses[statusCode]?.schema || {};
+              const { $ref } = schema;
+              console.log('response', response);
 
-              return res.json(response);
+              const schemaConfig = $ref ? definitions[$ref.replace('#/definitions/', '')] : schema;
+              response.data = mockResponseData(schemaConfig, definitions);
+              res.json(response);
+              break;
             default:
-              return res.json(response);
+              console.log('in');
+            // return res.json(response);
           }
         };
       }
