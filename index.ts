@@ -4,13 +4,15 @@ import cors from 'cors';
 import morgan from 'morgan';
 import bodyParser from 'body-parser';
 import { connector, summarise } from 'swagger-routes-express';
-import * as routers from './routers';
+import * as overrideHandler from './routers/override-handler';
+import routers from './routers';
 import { walk } from './utils/index';
 import chalk from 'chalk';
 import _ from 'lodash';
 import generateRouterHandler from './routers/generateRouterHandler';
 import { customizeMergeSwaggerConfig } from './helpers';
 import getSwaggerConfig from './helpers/getSwaggerConfig';
+import config from './mock.config';
 
 const app = express();
 const log = (...params) => {
@@ -18,8 +20,7 @@ const log = (...params) => {
   console.log(...parseParams);
 };
 
-// Combine styled and normal strings
-const port = 9009;
+const { port, localPath, selectedTag } = config;
 // Logger
 app.use(morgan('dev'));
 // Enable CORS
@@ -32,6 +33,7 @@ app.use(
     extended: false,
   }),
 );
+
 // No cache
 app.use((req: any, res: { header: (arg0: string, arg1: string) => void }, next: () => void) => {
   res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
@@ -61,11 +63,11 @@ function onError(error: any) {
   }
 }
 
-const mergeDefinition = async (configPath) => {
+const mergeDefinition = async (localPath) => {
   let fileDefinitionJson;
-  if (configPath) {
+  if (localPath) {
     try {
-      const filePaths = await walk(configPath);
+      const filePaths = await walk(localPath);
       for (const filePath of filePaths) {
         const absolutePath = __dirname + '\\' + filePath;
         const { default: curConfig } = await import(absolutePath);
@@ -76,20 +78,20 @@ const mergeDefinition = async (configPath) => {
     }
   }
 
-  const apiDefinitionJson = await getSwaggerConfig();
-
+  const apiDefinitionJson = (await getSwaggerConfig()) || {};
   const mergeDefinitionJson = _.mergeWith(fileDefinitionJson || {}, apiDefinitionJson, customizeMergeSwaggerConfig);
   return mergeDefinitionJson;
 };
 
-const configPath = 'local';
-
 const createServer = async (app: express.Application) => {
-  const mergeDefinitionJson = await mergeDefinition(configPath);
+  const mergeDefinitionJson = await mergeDefinition(localPath);
   // Create mock functions based on swaggerConfig
-  const mockRouters = generateRouterHandler(mergeDefinitionJson);
-  const mergeRouter = Object.assign({}, routers, mockRouters);
-  const connectSwagger = connector(mergeRouter, mergeDefinitionJson);
+  const mockRoutersHandler = generateRouterHandler(mergeDefinitionJson, selectedTag);
+  console.log(`: ------------------------------------------------------`);
+  console.log(`createServer -> mockRoutersHandler`, mockRoutersHandler);
+  console.log(`: ------------------------------------------------------`);
+  const mergeRouterHandler = Object.assign({}, mockRoutersHandler, overrideHandler);
+  const connectSwagger = connector(mergeRouterHandler, mergeDefinitionJson);
   connectSwagger(app);
   // Print swagger router api summary
   // const apiSummary = summarise(mergeDefinitionJson);
@@ -111,3 +113,4 @@ const createServer = async (app: express.Application) => {
 };
 
 createServer(app);
+app.use(routers);

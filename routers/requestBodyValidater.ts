@@ -9,9 +9,6 @@ import { Primitive } from 'type-fest';
 
 export const validateRequestBody = (payLoad, schemaConfig, definitions) => {
   const { type, properties, required = [] } = schemaConfig;
-  console.log(`: ---------------------------------`);
-  console.log(`validateRequestBody -> type`, type);
-  console.log(`: ---------------------------------`);
   const payLoadType = typeof payLoad;
   let resquestBodyData: any;
   if (payLoadType === 'object' && type !== payLoadType) {
@@ -151,8 +148,6 @@ export const handleArrayTypeCondition = (
         }
       }
     } else {
-      console.log('payLoadData', payLoadArr);
-
       const refUrl = items.$ref?.replace('#/definitions/', '');
       const schemaConfig = refUrl ? definitions[refUrl] : items;
       const payLoadChildValidRes = [];

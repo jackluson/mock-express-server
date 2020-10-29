@@ -11,6 +11,10 @@ import { MockResponse } from 'typings/global';
 import { mockResponseData } from './mockTypeData';
 import { validateRequestBody } from './requestBodyValidater';
 import formidable from 'formidable';
+import config from '../mock.config';
+
+const { successCode } = config;
+
 const form = formidable({ multiples: true });
 
 export enum Code {
@@ -18,7 +22,7 @@ export enum Code {
   Redirect,
   ParameterError = 30001, //参数错误
   Unknown,
-  Success = 30000,
+  Success = successCode,
 }
 
 const RequestBodyMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
@@ -36,7 +40,7 @@ const filterPath = (paths: Record<string, any>, filterTagsStr: string) => {
     const pathConfig = paths[path];
     const methods = Object.keys(pathConfig || {});
     for (const method of methods) {
-      if (pathConfig[method]?.tags?.includes(filterTagsStr)) {
+      if (pathConfig[method]?.tags?.join().includes(filterTagsStr)) {
         if (!targetPaths[path]) {
           targetPaths[path] = {};
         }
@@ -110,7 +114,7 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = '') => {
           } else {
             let checkType = 'body';
             // 处理multipart/form-data类型
-            if (headers['content-type'].includes('multipart/form-data')) {
+            if (headers['content-type']?.includes('multipart/form-data')) {
               await new Promise((resolve) => {
                 // 不校验文件字段， 校验其他字段
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -230,21 +234,20 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = '') => {
               break;
             case Code.Unknown:
               response.code = code;
-              res.redirect(301, 'https://google.com');
+              res.redirect(301, 'https://dev-crm.vipthink.cn/#/account/login');
               break;
             case Code.Success:
               response.code = code;
               const statusCode = '200';
               const schema = responses[statusCode]?.schema || {};
               const { $ref } = schema;
-              console.log('response', response);
 
               const schemaConfig = $ref ? definitions[$ref.replace('#/definitions/', '')] : schema;
               response.data = mockResponseData(schemaConfig, definitions);
               res.json(response);
               break;
             default:
-              console.log('in');
+              console.log('in--> default');
             // return res.json(response);
           }
         };

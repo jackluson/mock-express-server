@@ -1,33 +1,55 @@
-import redis from 'redis';
-import { promisify } from 'util';
+import { promisify } from '../utils/';
+import chalk from 'chalk';
 import axios from 'axios';
-const client = redis.createClient(6379, '127.0.0.1');
-let flag = true;
-client.on('error', function (err) {
-  flag = false;
-  console.log('err', err);
-});
-const getAsync = promisify(client.hget).bind(client);
-const hmName = 'mockSite';
-const swaggerUrl = `https://dev-oa.vipthink.cn/oa/v2/api-docs?group=COMPLEX`;
-const getSwaggerConfig = async () => {
-  if (flag) {
-    const swaggerConfig = await getAsync(hmName, swaggerUrl);
-    const jsonData = typeof swaggerConfig === 'string' && JSON.parse(swaggerConfig);
-    if (typeof jsonData === 'object') {
-      return jsonData;
-    }
-  }
+import config from '../mock.config';
 
-  try {
-    const res: Record<string, any> = await axios.get(swaggerUrl);
-    if (flag) {
-      client.hmset(hmName, { [swaggerUrl]: JSON.stringify(res.data) }, redis.print);
-      client.expire(hmName, 60 * 60 * 24, redis.print);
-    }
-    return res.data;
-  } catch (error) {
-    console.log('getSwaggerConfig -> error', error);
+const { isLocalOpenRedis, swaggerUrl } = config;
+const getSwaggerConfig = async () => {
+  if (isLocalOpenRedis) {
+    return new Promise((resolve, reject) => {
+      import('redis').then(async (_) => {
+        const redis = _.default;
+        const client = redis.createClient(6379, '127.0.0.1');
+        let noError = true;
+        client.on('error', function (err) {
+          noError = false;
+          console.log(chalk.red('errorInfo:', err));
+        });
+        const hmName = 'mockSite';
+        const getAsync = promisify(client.hget.bind(client));
+        if (noError) {
+          const swaggerConfig = await getAsync(hmName, swaggerUrl + 'j');
+          const jsonData = typeof swaggerConfig === 'string' && JSON.parse(swaggerConfig);
+          // if has data , return data;
+          if (typeof jsonData === 'object') {
+            return resolve(jsonData);
+          }
+        }
+        return axios
+          .get(swaggerUrl)
+          .then((res) => {
+            const data = res.data;
+            if (noError) {
+              client.hmset(hmName, { [swaggerUrl]: JSON.stringify(res.data) }, redis.print);
+              client.expire(hmName, 60 * 60 * 24, redis.print);
+            }
+            resolve(data);
+          })
+          .catch((error) => {
+            console.log(chalk.red(`${swaggerUrl} request error-->`, error));
+            reject(error);
+          });
+      });
+    });
+  } else {
+    return axios
+      .get(swaggerUrl)
+      .then((res) => {
+        return res.data;
+      })
+      .catch((error) => {
+        console.log(chalk.red(`${swaggerUrl} request error-->`, error));
+      });
   }
 };
 
