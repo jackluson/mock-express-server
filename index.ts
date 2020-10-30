@@ -69,7 +69,7 @@ const mergeDefinition = async (localPath) => {
     try {
       const filePaths = await walk(localPath);
       for (const filePath of filePaths) {
-        const absolutePath = __dirname + '\\' + filePath;
+        const absolutePath = filePath;
         const { default: curConfig } = await import(absolutePath);
         fileDefinitionJson = _.mergeWith(fileDefinitionJson || {}, curConfig, customizeMergeSwaggerConfig);
       }

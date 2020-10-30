@@ -13,16 +13,16 @@ import { validateRequestBody } from './requestBodyValidater';
 import formidable from 'formidable';
 import config from '../mock.config';
 
-const { successCode } = config;
+const { codeMap } = config;
 
 const form = formidable({ multiples: true });
 
 export enum Code {
-  Unlogin = 10001,
+  Unlogin = codeMap.unlogin,
+  ParameterError = codeMap.parameterError, //参数错误
+  Success = codeMap.success,
+  Unknown = 300001,
   Redirect,
-  ParameterError = 30001, //参数错误
-  Unknown,
-  Success = successCode,
 }
 
 const RequestBodyMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
