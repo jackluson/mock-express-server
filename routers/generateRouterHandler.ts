@@ -13,7 +13,7 @@ import { validateRequestBody } from './requestBodyValidater';
 import formidable from 'formidable';
 import config from '../mock.config';
 
-const { codeMap } = config;
+const { codeMap, isOpenValidParams } = config;
 
 const form = formidable({ multiples: true });
 
@@ -103,123 +103,125 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = '') => {
             data: undefined,
             header: undefined,
           };
-          const { authorization } = headers;
 
-          // no has anthoriztion
-          if (!authorization) {
-            code = Code.Unlogin;
-            response.data = {};
-            response.data['message'] = 'authorized error, please login again';
-            response.data['code'] = code;
-          } else {
-            let checkType = 'body';
-            // 处理multipart/form-data类型
-            if (headers['content-type']?.includes('multipart/form-data')) {
-              await new Promise((resolve) => {
-                // 不校验文件字段， 校验其他字段
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                form.parse(req, (err, fields, files) => {
-                  if (err) {
-                    resolve(err);
-                    return;
-                  }
-                  checkType = 'query'; //其他字段放在query校验
-                  Object.assign(query, fields);
-                  resolve();
+          if (isOpenValidParams) {
+            const { authorization } = headers;
+            // no has anthoriztion
+            if (!authorization) {
+              code = Code.Unlogin;
+              response.data = {};
+              response.data['message'] = 'authorized error, please login again';
+              response.data['code'] = code;
+            } else {
+              let checkType = 'body';
+              // 处理multipart/form-data类型
+              if (headers['content-type']?.includes('multipart/form-data')) {
+                await new Promise((resolve) => {
+                  // 不校验文件字段， 校验其他字段
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  form.parse(req, (err, fields, files) => {
+                    if (err) {
+                      resolve(err);
+                      return;
+                    }
+                    checkType = 'query'; //其他字段放在query校验
+                    Object.assign(query, fields);
+                    resolve();
+                  });
                 });
-              });
-            }
-            //   TODO:  parameters:
-            // - $ref: '#/parameters/offsetParam'
-            // - $ref: '#/parameters/limitParam'
-            // abstract require params && body params
-            const requiredParameters = parameters.filter(
-              (parameters) => parameters.required || parameters.in === checkType,
-            );
+              }
+              //   TODO:  parameters:
+              // - $ref: '#/parameters/offsetParam'
+              // - $ref: '#/parameters/limitParam'
+              // abstract require params && body params
+              const requiredParameters = parameters.filter(
+                (parameters) => parameters.required || parameters.in === checkType,
+              );
 
-            // 参数错误
-            if (requiredParameters.length > 0) {
-              let responseKey;
-              requiredParameters.forEach((requiredParameter) => {
-                const { name } = requiredParameter;
-                const payloadKey = requiredParameter.in;
-                let responseKeyVal;
-                switch (payloadKey) {
-                  case 'header':
-                    const ignoreName = name.toLowerCase();
+              // 参数错误
+              if (requiredParameters.length > 0) {
+                let responseKey;
+                requiredParameters.forEach((requiredParameter) => {
+                  const { name } = requiredParameter;
+                  const payloadKey = requiredParameter.in;
+                  let responseKeyVal;
+                  switch (payloadKey) {
+                    case 'header':
+                      const ignoreName = name.toLowerCase();
 
-                    const val = headers[ignoreName];
-                    if (!val) {
-                      responseKey = 'headerInfo';
-                      responseKeyVal = `please catch ${name} params in header`;
-                    }
-                    break;
-                  case 'query':
-                    const qureyVal = query[name];
-                    // only check if has the field
-                    if (!qureyVal) {
-                      responseKey = 'queryInfo';
-                      responseKeyVal = `the ${name} param missed`;
-                    }
-                    break;
-                  case 'path':
-                    const paramVal = params[name];
-                    if (!paramVal) {
-                      responseKey = 'paramInfo';
-                      responseKeyVal = `the ${name} param missed`;
-                    }
-                    break;
-                  case 'body':
-                    if (!RequestBodyMethods.includes(method)) {
-                      break;
-                    }
-                    const { schema = {} } = requiredParameter;
-                    const {
-                      schema: { $ref },
-                      required,
-                    } = requiredParameter;
-
-                    // only post method, validate requrst body
-                    if (required && Object.keys(payLoad || {}).length === 0) {
-                      // adjust conten-type is in consumes
-                      const contentType = headers['content-type']?.replace(/([^;]*)(;.*)/, '$1');
-                      if (!consumes.includes(contentType)) {
+                      const val = headers[ignoreName];
+                      if (!val) {
                         responseKey = 'headerInfo';
-                        response[responseKey] = response[responseKey] || {};
-                        response[responseKey].contentType = `Content-Type should is ${consumes}`;
+                        responseKeyVal = `please catch ${name} params in header`;
                       }
-                      response['message'] = 'body is missed';
-                      code = Code.ParameterError;
-                    } else {
-                      const refUrl = $ref?.replace('#/definitions/', '');
-                      const schemaConfig = refUrl ? definitions[refUrl] : schema;
-                      const data = validateRequestBody(payLoad, schemaConfig, definitions);
-                      if (data) {
-                        response.schemaConfig = schemaConfig;
-                        responseKey = 'bodyInfo';
-                        response[responseKey] = data;
+                      break;
+                    case 'query':
+                      const qureyVal = query[name];
+                      // only check if has the field
+                      if (!qureyVal) {
+                        responseKey = 'queryInfo';
+                        responseKeyVal = `the ${name} param missed`;
                       }
-                    }
+                      break;
+                    case 'path':
+                      const paramVal = params[name];
+                      if (!paramVal) {
+                        responseKey = 'paramInfo';
+                        responseKeyVal = `the ${name} param missed`;
+                      }
+                      break;
+                    case 'body':
+                      if (!RequestBodyMethods.includes(method)) {
+                        break;
+                      }
+                      const { schema = {} } = requiredParameter;
+                      const {
+                        schema: { $ref },
+                        required,
+                      } = requiredParameter;
 
-                    break;
-                  default:
-                    break;
-                }
-                if (responseKey && responseKeyVal) {
-                  if (!response[responseKey]) {
-                    response[responseKey] = {};
+                      // only post method, validate requrst body
+                      if (required && Object.keys(payLoad || {}).length === 0) {
+                        // adjust conten-type is in consumes
+                        const contentType = headers['content-type']?.replace(/([^;]*)(;.*)/, '$1');
+                        if (!consumes.includes(contentType)) {
+                          responseKey = 'headerInfo';
+                          response[responseKey] = response[responseKey] || {};
+                          response[responseKey].contentType = `Content-Type should is ${consumes}`;
+                        }
+                        response['message'] = 'body is missed';
+                        code = Code.ParameterError;
+                      } else {
+                        const refUrl = $ref?.replace('#/definitions/', '');
+                        const schemaConfig = refUrl ? definitions[refUrl] : schema;
+                        const data = validateRequestBody(payLoad, schemaConfig, definitions);
+                        if (data) {
+                          response.schemaConfig = schemaConfig;
+                          responseKey = 'bodyInfo';
+                          response[responseKey] = data;
+                        }
+                      }
+
+                      break;
+                    default:
+                      break;
                   }
-                  response[responseKey][name] = responseKeyVal;
+                  if (responseKey && responseKeyVal) {
+                    if (!response[responseKey]) {
+                      response[responseKey] = {};
+                    }
+                    response[responseKey][name] = responseKeyVal;
+                  }
+                });
+                if (responseKey) {
+                  code = Code.ParameterError;
+                  response['message'] = 'parameters error';
                 }
-              });
-              if (responseKey) {
-                code = Code.ParameterError;
-                response['message'] = 'parameters error';
               }
             }
-          }
-          if (payLoad.redirect) {
-            code = Code.Unknown;
+            if (payLoad.redirect) {
+              code = Code.Unknown;
+            }
           }
 
           switch (code) {

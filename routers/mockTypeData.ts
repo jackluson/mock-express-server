@@ -109,7 +109,7 @@ const basisTypeData = (config) => {
  */
 const handleArrayTypeCondition = (config, definitions) => {
   let { items } = config;
-  let data: any[] = Array.from({ length: 3 });
+  let data: any[] = Array.from({ length: 6 });
   if (items.items) {
     while (items.items) {
       data.forEach(function (_item, index) {
