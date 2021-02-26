@@ -77,6 +77,7 @@ const basisTypeData = (config) => {
       data = faker.random.words();
       break;
     case 'integer':
+    case 'number':
     case 'int32':
     case 'int64':
       data = faker.random.number();
