@@ -5,7 +5,7 @@ import config from '../mock.config';
 
 const { isLocalOpenRedis, swaggerUrl } = config;
 const getSwaggerConfig = async () => {
-  if(!swaggerUrl) return
+  if (!swaggerUrl) return;
   if (isLocalOpenRedis) {
     return new Promise((resolve, reject) => {
       import('redis').then(async (_) => {

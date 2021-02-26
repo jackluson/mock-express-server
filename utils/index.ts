@@ -23,24 +23,25 @@ export const promisify = (fn) => {
 export const walk = async (pathRoad) => {
   const readDirAsync = promisify(fs.readdir);
   const lstatAsync = promisify(fs.lstat);
-
-  const statInfo = (await lstatAsync(pathRoad)) as fs.Stats;
+  const cwd = process.cwd();
+  const pathDir = cwd + pathRoad;
+  const statInfo = (await lstatAsync(pathDir)) as fs.Stats;
 
   if (statInfo.isFile()) {
-    return lstatAsync(pathRoad).then((stat: fs.Stats) => {
+    return lstatAsync(pathDir).then((stat: fs.Stats) => {
       if (stat.isDirectory()) {
-        return walk(pathRoad);
+        return walk(pathDir);
       } else {
-        return [pathRoad];
+        return [pathDir];
       }
     });
   }
 
-  return readDirAsync(pathRoad)
+  return readDirAsync(pathDir)
     .then((files: []) => {
       return Promise.all(
         files.map((f) => {
-          const file = path.join(pathRoad, f);
+          const file = path.join(pathDir, f);
           return lstatAsync(file).then((stat: fs.Stats) => {
             if (stat.isDirectory()) {
               return walk(file);

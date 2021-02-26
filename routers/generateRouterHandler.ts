@@ -236,7 +236,7 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = '') => {
               break;
             case Code.Unknown:
               response.code = code;
-              res.redirect(301, 'https://dev-crm.vipthink.cn/#/account/login');
+              res.redirect(301, 'https://github.com/jackluson/swagger-mocker');
               break;
             case Code.Success:
               response.code = code;
