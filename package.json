@@ -10,15 +10,21 @@
     "demo": "ts-node-dev demo/file-op.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": [
+    "mock",
+    "mock-server",
+    "typescript"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "chalk": "^4.1.0",
+    "express": "^4.17.1",
     "faker": "^4.1.0",
     "formidable": "^1.2.2",
     "lodash": "^4.17.20",
-    "redis": "^3.0.2"
+    "redis": "^3.0.2",
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
     "@manifoldco/swagger-to-ts": "^2.0.0",
@@ -38,6 +44,7 @@
     "swagger-routes-express": "^3.2.1",
     "swagger-ts-doc": "^1.0.13",
     "ts-node-dev": "^1.0.0-pre.56",
-    "type-fest": "^0.16.0"
+    "type-fest": "^0.16.0",
+    "typescript": "^4.3.5"
   }
 }

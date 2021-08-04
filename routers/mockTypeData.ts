@@ -109,9 +109,13 @@ const basisTypeData = (config) => {
  * @returns array
  */
 const handleArrayTypeCondition = (config, definitions) => {
-  let { items } = config;
+  let { items, $ref } = config;
+  const refUrl = $ref?.replace('#/definitions/', '');
+  const schemaConfig = refUrl ? definitions[refUrl] : null;
   let data: any[] = Array.from({ length: 6 });
-  if (items.items) {
+  if (schemaConfig) {
+    return mockResponseData(schemaConfig, definitions);
+  } else if (items.items) {
     while (items.items) {
       data.forEach(function (_item, index) {
         data[index] = Array.from({ length: 2 });

@@ -90,7 +90,6 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = '') => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         routers[operationId] = async (req: Request, res: Response, next: NextFunction) => {
           const { url, method, headers, query, params, body } = req;
-
           const payLoad = RequestBodyMethods.includes(method) ? body : query;
           let code: Code = Code.Success;
           const response: MockResponse = {
@@ -116,7 +115,7 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = '') => {
               let checkType = 'body';
               // 处理multipart/form-data类型
               if (headers['content-type']?.includes('multipart/form-data')) {
-                await new Promise((resolve) => {
+                await new Promise<void>((resolve) => {
                   // 不校验文件字段， 校验其他字段
                   // eslint-disable-next-line @typescript-eslint/no-unused-vars
                   form.parse(req, (err, fields, files) => {
