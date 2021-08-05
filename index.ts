@@ -1,11 +1,9 @@
-import express from 'express';
+
 import http from 'http';
-import cors from 'cors';
-import morgan from 'morgan';
-import bodyParser from 'body-parser';
+import type express from 'express'
 import { connector, summarise } from 'swagger-routes-express';
 import * as overrideHandler from './routers/override-handler';
-import routers from './routers';
+
 import { walk } from './utils/index';
 import chalk from 'chalk';
 import _ from 'lodash';
@@ -13,34 +11,15 @@ import generateRouterHandler from './routers/generateRouterHandler';
 import { customizeMergeSwaggerConfig } from './helpers';
 import getSwaggerConfig from './helpers/getSwaggerConfig';
 import config from './mock.config';
+import { app } from './app'
 
-const app = express();
+
 const log = (...params) => {
   const parseParams = JSON.parse(JSON.stringify(params));
   console.log(...parseParams);
 };
 
 const { port, localPath, selectedTag } = config;
-// Logger
-app.use(morgan('dev'));
-// Enable CORS
-app.use(cors());
-// POST, PUT, DELETE body parser
-app.use(bodyParser.json({ limit: '20mb' }));
-app.use(
-  bodyParser.urlencoded({
-    limit: '20mb',
-    extended: false,
-  }),
-);
-
-// No cache
-app.use((req: any, res: { header: (arg0: string, arg1: string) => void }, next: () => void) => {
-  res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-  res.header('Pragma', 'no-cache');
-  res.header('Expires', '-1');
-  next();
-});
 
 // Event listener for HTTP server "error" event.
 function onError(error: any) {
@@ -87,22 +66,11 @@ const createServer = async (app: express.Application) => {
   const mergeDefinitionJson = await mergeDefinition(localPath);
   // Create mock functions based on swaggerConfig
   const mockRoutersHandler = generateRouterHandler(mergeDefinitionJson, selectedTag);
-  console.log(`: ------------------------------------------------------`);
-  console.log(`createServer -> mockRoutersHandler`, mockRoutersHandler);
-  console.log(`: ------------------------------------------------------`);
   const mergeRouterHandler = Object.assign({}, mockRoutersHandler, overrideHandler);
   const connectSwagger = connector(mergeRouterHandler, mergeDefinitionJson);
   connectSwagger(app);
   // Print swagger router api summary
   // const apiSummary = summarise(mergeDefinitionJson);
-  // Catch 404 error
-  app.use((req: any, res: any) => {
-    const err = new Error('Not Found');
-    res.status(404).json({
-      message: err.message,
-      error: err,
-    });
-  });
 
   // Create HTTP server.
   const server = http.createServer(app);
@@ -113,4 +81,3 @@ const createServer = async (app: express.Application) => {
 };
 
 createServer(app);
-app.use(routers);
