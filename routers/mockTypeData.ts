@@ -114,7 +114,10 @@ const handleArrayTypeCondition = (config, definitions) => {
   const schemaConfig = refUrl ? definitions[refUrl] : null;
   let data: any[] = Array.from({ length: 6 });
   if (schemaConfig) {
-    return mockResponseData(schemaConfig, definitions);
+    data.forEach(function (_item, index) {
+      data[index] = mockResponseData(schemaConfig, definitions);
+    });
+    return data;
   } else if (items.items) {
     while (items.items) {
       data.forEach(function (_item, index) {
