@@ -1,6 +1,6 @@
 {
   "name": "sm-server",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "a mock server with node express",
   "main": "dist/index.js",
   "bin": {
