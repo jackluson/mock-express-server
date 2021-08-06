@@ -1,10 +1,10 @@
 import { promisify } from '../utils/';
 import chalk from 'chalk';
 import axios from 'axios';
-import config from '../mock.config';
+import config from '../default.config';
 
-const { isLocalOpenRedis, swaggerUrl } = config;
-const getSwaggerConfig = async () => {
+const { isLocalOpenRedis } = config;
+const getSwaggerConfig = async (swaggerUrl: string) => {
   if (!swaggerUrl) return;
   if (isLocalOpenRedis) {
     return new Promise((resolve, reject) => {

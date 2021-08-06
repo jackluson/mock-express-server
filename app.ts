@@ -27,16 +27,7 @@ app.use((req: any, res: { header: (arg0: string, arg1: string) => void }, next: 
   res.header('Expires', '-1');
   next();
 });
-// Catch 404 error
-app.use((req: any, res: any) => {
-  const err = new Error('Not Found');
-  res.status(404).json({
-    message: err.message,
-    error: err,
-  });
-});
+
 app.use(routers);
 
-
-
-export { app};
+export { app };

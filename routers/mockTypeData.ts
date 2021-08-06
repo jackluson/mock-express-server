@@ -109,7 +109,8 @@ const basisTypeData = (config) => {
  * @returns array
  */
 const handleArrayTypeCondition = (config, definitions) => {
-  let { items, $ref } = config;
+  const { $ref } = config;
+  let { items } = config;
   const refUrl = $ref?.replace('#/definitions/', '');
   const schemaConfig = refUrl ? definitions[refUrl] : null;
   let data: any[] = Array.from({ length: 6 });

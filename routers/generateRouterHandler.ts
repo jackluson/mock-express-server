@@ -2,7 +2,6 @@
 /*
  * Desc: 依据swagger配置文件，动态挂在handler
  * File: \routers\generatedHandler\index.ts
- * Project: mock
  * File Created: Wednesday, 5th August 2020 4:15:14 pm
  */
 
@@ -11,7 +10,7 @@ import { MockResponse } from 'typings/global';
 import { mockResponseData } from './mockTypeData';
 import { validateRequestBody } from './requestBodyValidater';
 import formidable from 'formidable';
-import config from '../mock.config';
+import config from '../default.config';
 
 const { codeMap, isOpenValidParams } = config;
 
