@@ -12,6 +12,7 @@
     "build:watch": "tsc -w",
     "run:build": "node dist/index.js",
     "demo": "ts-node-dev demo/file-op.ts",
+    "postversion": "git push --follow-tags",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -23,6 +24,8 @@
   "license": "ISC",
   "dependencies": {
     "@vue/cli-shared-utils": "^4.5.13",
+    "axios": "^0.19.2",
+    "body-parser": "^1.19.0",
     "chalk": "^4.1.2",
     "clipboardy": "^2.3.0",
     "commander": "^8.1.0",
@@ -32,6 +35,7 @@
     "lodash": "^4.17.20",
     "pkg-dir": "^5.0.0",
     "redis": "^3.0.2",
+    "swagger-routes-express": "^3.2.1",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
@@ -43,14 +47,11 @@
     "@types/redis": "^2.8.25",
     "@typescript-eslint/eslint-plugin": "^3.7.1",
     "@typescript-eslint/parser": "^3.7.1",
-    "axios": "^0.19.2",
-    "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "eslint": "^7.32.0",
     "eslint-plugin-prettier": "^3.1.4",
     "morgan": "^1.10.0",
     "prettier": "^2.0.5",
-    "swagger-routes-express": "^3.2.1",
     "swagger-ts-doc": "^1.0.13",
     "ts-node-dev": "^1.0.0-pre.56",
     "type-fest": "^0.16.0",

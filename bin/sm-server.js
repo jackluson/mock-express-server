@@ -6,7 +6,7 @@ const chalk = require('chalk');
 const pkgDir = require('pkg-dir');
 
 const { name, bin, main, version } = require('../package.json');
-const projectRoot = pkgDir.sync(process.cwd());
+const projectRoot = pkgDir.sync(__dirname);
 const distDir = 'dist';
 const defaultConfigFileName = 'default.config.js';
 const defaultConfigPath = path.join(projectRoot, distDir, defaultConfigFileName);
