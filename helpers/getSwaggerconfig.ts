@@ -3,10 +3,10 @@ import chalk from 'chalk';
 import axios from 'axios';
 import config from '../default.config';
 
-const { isLocalOpenRedis } = config;
+const { openLocalRedis } = config;
 const getSwaggerConfig = async (swaggerUrl: string) => {
   if (!swaggerUrl) return;
-  if (isLocalOpenRedis) {
+  if (openLocalRedis) {
     return new Promise((resolve, reject) => {
       import('redis').then(async (_) => {
         const redis = _.default;

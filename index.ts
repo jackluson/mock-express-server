@@ -29,10 +29,10 @@ class Server {
   }
 
   async create() {
-    const { port, copy, selectedTag } = this.config;
+    const { port, tag } = this.config;
     const mergeDefinitionJson = await this.mergeDefinition();
     // Create mock functions based on swaggerConfig
-    const mockRoutersHandler = generateRouterHandler(mergeDefinitionJson, selectedTag);
+    const mockRoutersHandler = generateRouterHandler(mergeDefinitionJson, tag);
     const mergeRouterHandler = Object.assign({}, mockRoutersHandler, overrideHandler);
     const connectSwagger = connector(mergeRouterHandler, mergeDefinitionJson);
 
@@ -47,17 +47,7 @@ class Server {
     // Listen on provided port, on all network interfaces.
     server.listen(port);
     server.on('error', this.onError.bind(this));
-
-    let copied = '';
-    const localUrlForBrowser = `http://localhost:${port}/`;
-    if (copy) {
-      require('clipboardy').writeSync(localUrlForBrowser);
-      copied = chalk.dim('(copied to clipboard)');
-    }
-
-    console.log();
-    console.log(`  mock server running at:`);
-    console.log(`  - Local:   ${chalk.cyan(localUrlForBrowser)} ${copied}`);
+    return this;
   }
 
   async mergeDefinition() {
@@ -81,6 +71,20 @@ class Server {
     return mergeDefinitionJson;
   }
 
+  log() {
+    const { port, copy } = this.config;
+    let copied = '';
+    const localUrlForBrowser = `http://localhost:${port}/`;
+    if (copy) {
+      require('clipboardy').writeSync(localUrlForBrowser);
+      copied = chalk.dim('(copied to clipboard)');
+    }
+
+    console.log();
+    console.log(`  mock server running at:`);
+    console.log(`  - Local:   ${chalk.cyan(localUrlForBrowser)} ${copied}`);
+  }
+
   // Event listener for HTTP server "error" event.
   onError(error: any) {
     const { port } = this.config;
@@ -92,21 +96,20 @@ class Server {
     switch (error.code) {
       case 'EACCES':
         console.error('Express ERROR (app) : Port %s requires elevated privileges', port);
-        process.exit(1);
-      // eslint-disable-next-line no-fallthrough
+        break;
       case 'EADDRINUSE':
         console.error('Express ERROR (app) : Port %s is already in use', port);
-        process.exit(1);
-      // eslint-disable-next-line no-fallthrough
+        break;
       default:
         throw error;
     }
+    process.exit(1);
   }
 }
 
-const start = async (option) => {
+const start = async (option?: Option) => {
   const server = new Server(option, app);
-  await server.create();
+  (await server.create()).log();
   // await createServer(app, option);
   // Catch 404 error
   app.use((req: any, res: any) => {
@@ -117,5 +120,9 @@ const start = async (option) => {
     });
   });
 };
+
+if (process.env.TS_NODE_DEV) {
+  start();
+}
 
 export default start;

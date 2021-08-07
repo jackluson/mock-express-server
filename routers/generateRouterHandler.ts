@@ -12,7 +12,7 @@ import { validateRequestBody } from './requestBodyValidater';
 import formidable from 'formidable';
 import config from '../default.config';
 
-const { codeMap, isOpenValidParams } = config;
+const { codeMap, openValidParams } = config;
 
 const form = formidable({ multiples: true });
 
@@ -102,7 +102,7 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = '') => {
             header: undefined,
           };
 
-          if (isOpenValidParams) {
+          if (openValidParams) {
             const { authorization } = headers;
             // no has anthoriztion
             if (!authorization) {

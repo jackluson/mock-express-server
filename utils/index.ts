@@ -23,8 +23,9 @@ export const promisify = (fn) => {
 export const walk = async (pathRoad) => {
   const readDirAsync = promisify(fs.readdir);
   const lstatAsync = promisify(fs.lstat);
+  const isAbsolute = path.isAbsolute(pathRoad);
   const cwd = process.cwd();
-  const pathDir = cwd + pathRoad;
+  const pathDir = `${isAbsolute ? '' : cwd}/${pathRoad}`;
   const statInfo = (await lstatAsync(pathDir)) as fs.Stats;
 
   if (statInfo.isFile()) {
