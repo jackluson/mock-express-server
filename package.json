@@ -1,14 +1,14 @@
 {
-  "name": "sm-server",
+  "name": "mock-server",
   "version": "0.7.2",
   "description": "a mock server with node express",
   "main": "dist/index.js",
   "bin": {
-    "sm-server": "./bin/sm-server.js"
+    "mock-server": "./bin/mock-server.js"
   },
   "scripts": {
     "start": "ts-node-dev index.ts",
-    "build": "tsc",
+    "build": "tsc -d",
     "build:watch": "tsc -w",
     "run:build": "node dist/index.js",
     "demo": "ts-node-dev demo/file-op.ts",
