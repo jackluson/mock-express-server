@@ -40,31 +40,31 @@ yarn install
 
 值类型：string
 
-描述：本地 swagger 配置文件夹的绝对路径(会遍历该文件夹下的所有文件 swagger 配置文件)
+描述：1. 本机绝对路径；2. 相对项目根目录路径（拼接`process.cwd()`）路径；（若是文件夹路径，则会遍历该文件夹下的所有文件 swagger 配置文件),
 
-### selectedTag
+### tag
 
 值类型：string
 
-描述：对应 swagger config 的 tags，空的话,则选择全部 tags 的 path， 配置的话经过筛选后,只启动该 tag 下面的接口
+描述：对应 swagger config 的 tags，空的话,则选择全部 tags 的 path， 配置的话经过筛选后,只启动该 tag 下面的接口, 例如：/pet'
 
 ### url
 
 值类型：string
 
-描述：数据源的获取路径，目前只支持 Swagger 2.0。如 "https://petstore.swagger.io/v2/swagger.json"
+描述：数据源的获取路径，目前只支持 Swagger 2.0。如 "https://petstore.swagger.io/v2/swagger.json"， 如果同时配置了 url 与 localPath， 合并两者，若有冲突，以 url 配置为止
 
-### isLocalOpenRedis
-
-值类型：boolean
-
-描述: 是否开始 redis 存储 swagger 配置（一般用于调试阶段）
-
-### isOpenValidParams
+### openLocalRedis
 
 值类型：boolean
 
 描述: 是否开始 redis 存储 swagger 配置（一般用于调试阶段）
+
+### openValidParams
+
+值类型：boolean
+
+描述: 是否检验请求参数类型合法，false，则不检验, 直接返回响应数据
 
 ### codeMap
 
