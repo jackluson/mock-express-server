@@ -1,6 +1,6 @@
-import { promisify } from '../utils/';
 import chalk from 'chalk';
 import axios from 'axios';
+import { promisify } from './index';
 import config from '../default.config';
 
 const { openLocalRedis } = config;
