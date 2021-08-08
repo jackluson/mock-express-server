@@ -6,6 +6,14 @@
   "bin": {
     "mock-server": "./bin/mock-server.js"
   },
+  "homepage": "https://github.com/jackluson/mock-express-server",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jackluson/mock-express-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jackluson/mock-express-server/issues"
+  },
   "scripts": {
     "start": "ts-node-dev index.ts",
     "build": "tsc -d",
@@ -24,12 +32,12 @@
   "license": "ISC",
   "dependencies": {
     "@vue/cli-shared-utils": "^4.5.13",
-    "axios": "^0.19.2",
+    "axios": "0.21.1",
     "body-parser": "^1.19.0",
     "chalk": "^4.1.2",
-    "cors": "^2.8.5",
     "clipboardy": "^2.3.0",
     "commander": "^8.1.0",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "faker": "^4.1.0",
     "formidable": "^1.2.2",
@@ -56,5 +64,8 @@
     "ts-node-dev": "^1.0.0-pre.56",
     "type-fest": "^0.16.0",
     "typescript": "^4.3.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
