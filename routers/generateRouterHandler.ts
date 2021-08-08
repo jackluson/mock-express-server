@@ -234,7 +234,7 @@ const generateRouterHandler = (swaggerConfig, filterTagsStr = '') => {
               break;
             case Code.Unknown:
               response.code = code;
-              res.redirect(301, 'https://github.com/jackluson/swagger-mocker');
+              res.redirect(301, 'https://github.com/jackluson/mock-express-server');
               break;
             case Code.Success:
               response.code = code;

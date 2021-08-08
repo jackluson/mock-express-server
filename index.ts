@@ -2,14 +2,13 @@ import http from 'http';
 import type express from 'express';
 const { log } = require('@vue/cli-shared-utils');
 import { connector, summarise } from 'swagger-routes-express';
-import * as overrideHandler from './routers/override-handler';
-
-import { walk } from './utils/index';
 import chalk from 'chalk';
 import _ from 'lodash';
+
+import * as overrideHandler from './routers/override-handler';
+import { walk, customizeMergeSwaggerConfig } from './utils/index';
+import getSwaggerConfig from './utils/getSwaggerConfig';
 import generateRouterHandler from './routers/generateRouterHandler';
-import { customizeMergeSwaggerConfig } from './helpers';
-import getSwaggerConfig from './helpers/getSwaggerConfig';
 import config from './default.config';
 import { app } from './app';
 
