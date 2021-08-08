@@ -82,8 +82,8 @@ const config = {
 |       tag       | string  | ''                                                        |                                                  对应 swagger config 的 tags，空的话,则选择全部 tags 的 path， 配置的话经过筛选后,只启动该 tag 下面的接口, 例如：/pet'                                                   |
 |       url       | string  | ''                                                        | swagger config 数据源 url，目前只支持 Swagger 2.0。如 [https://petstore.swagger.io/v2/swagger.json](https://petstore.swagger.io/v2/swagger.json)， 如果同时配置了 url 与 localPath， 合并两者，若有冲突，以 url 配置为止 |
 | openLocalRedis  | boolean | false                                                     |                                                                                 是否开启 redis 存储 swagger 配置（一般用于开发调试阶段）                                                                                 |
-| openValidParams | boolean | false                                                     |                                                                               是否检验请求参数类型合法，false，则不检验, 直接返回响应数据                                                                                |
-|     codeMap     | object  | { success: 20000, unlogin: 40001, parameterError: 40003 } |                                                                                           描述:成功,错误等状态码 Code 映射 Map                                                                                           |
+| openValidParams | boolean | false                                                     |                                                                              是否检验请求参数类型合法，为 false，则不检验, 直接返回响应数据                                                                              |
+|     codeMap     | object  | { success: 20000, unlogin: 40001, parameterError: 40003 } |                                                                                               成功,错误等状态码 Code 映射                                                                                                |
 
 #### 子属性
 
