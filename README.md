@@ -33,14 +33,14 @@ npm install -g mock-express-server
 
 - 全局命令方式
 
-> ** Tip: ** `mock-express-server` 包的全局命令为：`mock-server`, 使用`mock-server --help`命令可查看命令使用说明，如图：
+> Tip: `mock-express-server` 包的全局命令为：`mock-server`, 使用`mock-server --help`命令可查看命令使用说明，如图：
 
 ![](./screenshot/cli-help.jpg)
 
-使用了 start 命令即可启动 node 服务，如图：
+执行 start 命令即可启动 node 服务，如图：
 ![](./screenshot/start-demo.jpg)
 
-使用`mock-server help start` 查看更多选项使用，如图：
+执行 `mock-server help start` 查看更多选项使用，如图：
 ![](./screenshot/start-help.jpg)
 
 - 配置文件方式
@@ -70,19 +70,19 @@ const config = {
 
 ### 属性如下
 
-|      name       |  type   | default                                                                                              |                                                                                                   description                                                                                                   |
-| :-------------: | :-----: | :--------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-|      port       | number  | 9009                                                                                                 |                                                                                               mock server 端口号                                                                                                |
-|    localPath    | string  | ''                                                                                                   |                                       1. 本机绝对路径；2. 相对项目根目录路径（拼接`process.cwd()`）路径；（若是文件夹路径，则会遍历该文件夹下的所有文件 swagger 配置文件)                                       |
-|       tag       | string  | ''                                                                                                   |                                              对应 swagger config 的 tags，空的话,则选择全部 tags 的 path， 配置的话经过筛选后,只启动该 tag 下面的接口, 例如：/pet'                                              |
-|       url       | string  | ''                                                                                                   | 数据源的获取路径，目前只支持 Swagger 2.0。如 [https://petstore.swagger.io/v2/swagger.json](https://petstore.swagger.io/v2/swagger.json)， 如果同时配置了 url 与 localPath， 合并两者，若有冲突，以 url 配置为止 |
-| openLocalRedis  | boolean | false                                                                                                |                                                                            是否开启 redis 存储 swagger 配置（一般用于开发调试阶段）                                                                             |
-| openValidParams | boolean | false                                                                                                |                                                                           是否检验请求参数类型合法，false，则不检验, 直接返回响应数据                                                                           |
-|     codeMap     | object  | { success: 20000, // 成功逻辑 code, unlogin: 40001, // 没有登录, parameterError: 40003, //参数错误 } |                                                                                      描述:成功,错误等状态码 Code 映射 Map                                                                                       |
+|      name       |  type   | default                                                   |                                                                                                       description                                                                                                        |
+| :-------------: | :-----: | :-------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|      port       | number  | 9009                                                      |                                                                                                    mock server 端口号                                                                                                    |
+|    localPath    | string  | ''                                                        |                                           1. 本机绝对路径；2. 相对项目根目录路径（拼接`process.cwd()`）路径；（若是文件夹路径，则会遍历该文件夹下的所有文件 swagger 配置文件)                                            |
+|       tag       | string  | ''                                                        |                                                  对应 swagger config 的 tags，空的话,则选择全部 tags 的 path， 配置的话经过筛选后,只启动该 tag 下面的接口, 例如：/pet'                                                   |
+|       url       | string  | ''                                                        | swagger config 数据源 url，目前只支持 Swagger 2.0。如 [https://petstore.swagger.io/v2/swagger.json](https://petstore.swagger.io/v2/swagger.json)， 如果同时配置了 url 与 localPath， 合并两者，若有冲突，以 url 配置为止 |
+| openLocalRedis  | boolean | false                                                     |                                                                                 是否开启 redis 存储 swagger 配置（一般用于开发调试阶段）                                                                                 |
+| openValidParams | boolean | false                                                     |                                                                               是否检验请求参数类型合法，false，则不检验, 直接返回响应数据                                                                                |
+|     codeMap     | object  | { success: 20000, unlogin: 40001, parameterError: 40003 } |                                                                                           描述:成功,错误等状态码 Code 映射 Map                                                                                           |
 
-#### 子字段
+#### 子属性
 
-codeMap
+- codeMap
 
 |      name      |  type  | default |  description  |
 | :------------: | :----: | :-----: | :-----------: |
