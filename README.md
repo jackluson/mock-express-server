@@ -2,6 +2,11 @@
 
 > 基于 `express`、`swagger` 的 Mock 数据服务工具, 为对接接口的过程提供便利
 
+[![npm version](https://badge.fury.io/js/mock-express-server.svg)](https://badge.fury.io/js/mock-express-server)
+![NPM Downloads](https://badgen.net/npm/dt/mock-express-server)
+[![Build Status](https://travis-ci.com/jackluson/mock-express-server.svg?branch=master)](https://travis-ci.com/jackluson/mock-express-server)
+[![MIT](https://img.shields.io/github/license/jackluson/mock-express-server?style=plastic)](https://github.com/jackluson/mock-express-server/blob/master/LICENSE)
+
 ## 介绍 :jack_o_lantern:
 
 根据 `swagger` 配置， 利用 `express` 动态创建生成 router(包括 route path、route handler)，在 route handler 中校验 req 中参数合理性，与利用[`faker.js`](https://github.com/Marak/Faker.js#readme) mock 数据返回 res
