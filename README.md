@@ -4,9 +4,9 @@
 
 ## 介绍 :jack_o_lantern:
 
-根据 `swagger` 配置， 利用 `express` 动态创建生成 router(包括 route path、route handler)，在 route handler 中校验 req 中参数合理性，与利用`faker` mock 数据放回 res
+根据 `swagger` 配置， 利用 `express` 动态创建生成 router(包括 route path、route handler)，在 route handler 中校验 req 中参数合理性，与利用[`faker.js`](https://github.com/Marak/Faker.js#readme) mock 数据返回 res
 
-**基本原理：**
+** 基本原理：**
 
 利用 `swagger` 的 path 生成对应的路由处理函数、path 下的 parameters 用来校验接口请求的参数、path 下面的 responses 用来 mock 接口返回接口参数，如果传参有误的话，则会返回具体错误详情。
 
