@@ -135,3 +135,18 @@ export const customizeMergeSwaggerConfig = (objValue, srcValue, key, object, sou
     return srcValue;
   }
 };
+
+export const getUserConfig = () => {
+  let userConfig = {};
+
+  const userConfigPath = 'mock.config.js';
+
+  const workRoot = process.cwd();
+
+  const isExistUseConfig = fs.existsSync(`${workRoot}/${userConfigPath}`);
+  if (isExistUseConfig) {
+    userConfig = require(`${workRoot}/${userConfigPath}`);
+  }
+
+  return userConfig;
+};

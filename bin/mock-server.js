@@ -2,33 +2,18 @@
 
 const program = require('commander');
 const path = require('path');
-const fs = require('fs');
 const chalk = require('chalk');
 const pkgDir = require('pkg-dir');
 
 const { name, bin, main, version } = require('../package.json');
 const distDir = 'dist';
 const defaultConfigFileName = 'default.config.js';
-const userConfigPath = 'mock.config.js';
 
 const projectRoot = pkgDir.sync(__dirname);
 const defaultConfigPath = path.join(projectRoot, distDir, defaultConfigFileName);
 
-const workRoot = process.cwd();
-let userConfig = {};
-
-const isExistUseConfig = fs.existsSync(`${workRoot}/${userConfigPath}`);
-if (isExistUseConfig) {
-  userConfig = require(`${workRoot}/${userConfigPath}`);
-}
-
 const defaultConfig = require(defaultConfigPath);
 const { port, url, openValidParams, copy, localPath, tag } = defaultConfig.default || defaultConfig;
-
-// const isAbsolute = path.isAbsolute(localPath);
-// console.log('🚀 -----------------------------------------------------------');
-// console.log('🚀 ~ file: mock-server.js ~ line 23 ~ isAbsolute', isAbsolute);
-// console.log('🚀 -----------------------------------------------------------');
 
 program
   .command('start')
@@ -43,13 +28,9 @@ program
   )
   .option('-c, --copy', `Whether to automatically paste to the clipboard (the default is ${copy})`)
   .action(async (option, ...args) => {
-    console.log('🚀 -------------------------------------------------------------');
-    console.log('🚀 ~ file: mock-server.js ~ line 42 ~ .action ~ option', option);
-    console.log('🚀 -------------------------------------------------------------');
-    const mergeOption = Object.assign(userConfig, option);
     const startEntryPath = projectRoot + '/' + main;
     const start = require(startEntryPath).default;
-    start(mergeOption);
+    start(option);
   });
 
 // add some useful info on help

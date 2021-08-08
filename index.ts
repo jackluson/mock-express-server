@@ -6,7 +6,7 @@ import chalk from 'chalk';
 import _ from 'lodash';
 
 import * as overrideHandler from './routers/override-handler';
-import { walk, getSwaggerConfig, customizeMergeSwaggerConfig } from './utils/index';
+import { walk, getSwaggerConfig, getUserConfig, customizeMergeSwaggerConfig } from './utils/index';
 import generateRouterHandler from './routers/generateRouterHandler';
 import config from './default.config';
 import { app } from './app';
@@ -22,7 +22,8 @@ class Server {
   app: express.Application;
 
   constructor(option: Option, app: express.Application) {
-    this.config = Object.assign(config, option);
+    const userConfig = getUserConfig();
+    this.config = Object.assign(config, userConfig, option);
     this.app = app;
   }
 
