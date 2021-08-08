@@ -6,8 +6,8 @@ import chalk from 'chalk';
 import _ from 'lodash';
 
 import * as overrideHandler from './routers/override-handler';
-import { walk, customizeMergeSwaggerConfig } from './utils/index';
 import getSwaggerConfig from './utils/getSwaggerConfig';
+import { walk, customizeMergeSwaggerConfig } from './utils/index';
 import generateRouterHandler from './routers/generateRouterHandler';
 import config from './default.config';
 import { app } from './app';

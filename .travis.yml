@@ -20,6 +20,7 @@ install:
 
 script:
   - echo "skipping tests"
+  - ls -al utils/
 
 before_deploy: npm run build
 

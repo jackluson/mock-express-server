@@ -3,8 +3,8 @@ import axios from 'axios';
 import { promisify } from './index';
 import config from '../default.config';
 
-const { openLocalRedis } = config;
 const getSwaggerConfig = async (swaggerUrl: string) => {
+  const { openLocalRedis } = config;
   if (!swaggerUrl) return;
   if (openLocalRedis) {
     return new Promise((resolve, reject) => {
