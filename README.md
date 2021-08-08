@@ -1,6 +1,6 @@
-# 前端 Mock 数据服务工具
+# Mock 数据服务工具
 
-> 基于 `express`、`swagger` 的 Mock 数据服务工具, 为对接接口的过程提供便利
+> 基于 `express`、`swagger config` 的 Mock 数据服务工具, 为对接接口的过程提供便利
 
 [![npm version](https://badge.fury.io/js/mock-express-server.svg)](https://badge.fury.io/js/mock-express-server)
 ![NPM Downloads](https://badgen.net/npm/dt/mock-express-server)
