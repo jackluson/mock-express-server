@@ -62,9 +62,9 @@ program.on('--help', () => {
 program.addHelpText(
   'after',
   `
-  more detail:
-  https://github.com/jackluson/node-swagger-mocker
-  `,
+More detail:
+https://github.com/jackluson/mock-express-server
+`,
 );
 
 // program.helpOption('-e, --HELP', 'read more information');
