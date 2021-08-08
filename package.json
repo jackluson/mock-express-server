@@ -1,6 +1,6 @@
 {
   "name": "mock-express-server",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "a mock server with node express",
   "main": "dist/index.js",
   "bin": {
