@@ -1,5 +1,6 @@
-import path from 'path';
-import { Response, Request, NextFunction, Router } from 'express';
+import fs from 'fs';
+import marked from 'marked';
+import express, { Response, Request, NextFunction, Router } from 'express';
 
 // const storage = multer.diskStorage({
 //   destination: function (req, file, cb) {
@@ -13,6 +14,27 @@ import { Response, Request, NextFunction, Router } from 'express';
 // const upload = multer({ storage: storage });
 
 const router = Router();
+marked.setOptions({
+  renderer: new marked.Renderer(),
+  highlight: function (code, lang) {
+    const hljs = require('highlight.js');
+    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+    return hljs.highlight(code, { language }).value;
+  },
+  pedantic: false,
+  gfm: true,
+  breaks: false,
+  sanitize: false,
+  smartLists: true,
+  smartypants: false,
+  xhtml: false,
+});
+
+const renderer = new marked.Renderer();
+
+renderer.image = function (href, title, alt) {
+  return '<img style="max-width: 80%;" src="' + href + '" alt="' + alt + '"/>';
+};
 
 router.get('/user', function (req: Request, res: Response, next: NextFunction) {
   res.download('./README.md', 'README.md', function (err) {
@@ -41,6 +63,7 @@ router.get('/user', function (req: Request, res: Response, next: NextFunction) {
     }
   });
 });
+router.use('/screenshot', express.static('screenshot'));
 
 router.get('/download', function (req, res) {
   const file = `./README.md`;
@@ -51,6 +74,12 @@ router.get('/fetch', function (req, res) {
   res.status(500).send({ error: 'filesomething blew up' });
   // res.set('Content-Type', 'text/html');
   // res.send(Buffer.from('whoop'));
+});
+
+router.get('/readme', function (req, res) {
+  const path = process.cwd() + '/README.md';
+  const file = fs.readFileSync(path, 'utf8');
+  res.send(marked(file.toString(), { renderer: renderer }));
 });
 
 router.post('/oa/v1/upload', function (req, res, next) {
