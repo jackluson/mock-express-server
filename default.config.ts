@@ -7,6 +7,7 @@ const config = {
   openLocalRedis: false, // 是否开始redis存储swagger 配置（一般用于开发阶段）
   openValidParams: false, // 是否检验请求参数类型合法，false，则不检验, 直接返回响应数据
   isHttps: false, // 是否是https，默认不是
+  redirectPath: 'ui',
   // 请求配置
   // 响应配置
   codeMap: {

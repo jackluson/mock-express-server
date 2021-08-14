@@ -51,7 +51,7 @@ class Server {
   }
 
   async mergeDefinition() {
-    const { url, localPath, isHttps } = this.config;
+    const { url, localPath } = this.config;
     let fileDefinitionJson;
     if (localPath) {
       try {
@@ -75,11 +75,18 @@ class Server {
     return this;
   }
 
+  redirectHost() {
+    const { redirectPath } = this.config;
+    this.app.get('/', (req, res) => {
+      res.redirect(301, 'http://' + req.headers.host + `/${redirectPath}`);
+    });
+    return this;
+  }
+
   useSwaggerConfig() {
     const { isHttps } = this.config;
     this.app.get('/swagger-config.json', (req, res) => {
-      console.log('req.connection', req.connection);
-      const schemes = (req.connection as any).encrypted || isHttps ? ['https', 'http'] : ['http'];
+      const schemes = (req.connection as any)?.encrypted || isHttps ? ['https', 'http'] : ['http'];
       res.json(Object.assign({}, this.swaggerConfig, { schemes }));
     });
     return this;
@@ -123,7 +130,7 @@ class Server {
 
 const start = async (option?: Option) => {
   const server = new Server(option, app);
-  (await server.create()).useSwaggerConfig().log();
+  (await server.create()).useSwaggerConfig().redirectHost().log();
   // Catch 404 error
   app.use((req: any, res: any) => {
     const err = new Error('Not Found');

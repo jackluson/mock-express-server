@@ -41,7 +41,7 @@ renderer.image = function (href, title, alt) {
 
 // 显示readme route处理
 router.get('/readme', function (req, res) {
-  const readmePath = path.join(projectRoot, 'README.md');
+  const readmePath = path.join(projectRoot, 'RADME.md');
   const file = fs.readFileSync(readmePath, 'utf8');
   res.send(marked(file.toString(), { renderer: renderer }));
 });
