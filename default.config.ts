@@ -6,8 +6,8 @@ const config = {
   url: 'https://petstore.swagger.io/v2/swagger.json', // swagger config 接口路径,例如：https://petstore.swagger.io/v2/swagger.json, 如果同时配置了url与localPath，合并两者，若有冲突，以url配置为止
   openLocalRedis: false, // 是否开始redis存储swagger 配置（一般用于开发阶段）
   openValidParams: false, // 是否检验请求参数类型合法，false，则不检验, 直接返回响应数据
-  isHttps: false, // 是否是https，默认不是
-  redirectPath: 'ui',
+  isHttps: false, // swagger-config.json是否返回https schemes，默认不是,设置true，主要是为了在codesandbox在线ide中使用
+  redirectPath: 'ui', // 根路径`/`重定向地址，默认重定向到`/ui`
   // 请求配置
   // 响应配置
   codeMap: {
