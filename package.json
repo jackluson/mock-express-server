@@ -18,6 +18,7 @@
     "start": "ts-node-dev index.ts",
     "build": "tsc -d",
     "build:watch": "tsc -w",
+    "cli:build": "node bin/mock-server.js start",
     "run:build": "node dist/index.js",
     "demo": "ts-node-dev demo/file-op.ts",
     "postversion": "git push --follow-tags",

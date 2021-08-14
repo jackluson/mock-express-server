@@ -1,5 +1,7 @@
 import fs from 'fs';
+import path from 'path';
 import marked from 'marked';
+import pkgDir from 'pkg-dir';
 import express, { Response, Request, NextFunction, Router } from 'express';
 
 // const storage = multer.diskStorage({
@@ -14,6 +16,7 @@ import express, { Response, Request, NextFunction, Router } from 'express';
 // const upload = multer({ storage: storage });
 
 const router = Router();
+const projectRoot = pkgDir.sync(__dirname);
 marked.setOptions({
   renderer: new marked.Renderer(),
   highlight: function (code, lang) {
@@ -38,12 +41,13 @@ renderer.image = function (href, title, alt) {
 
 // 显示readme route处理
 router.get('/readme', function (req, res) {
-  const path = process.cwd() + '/README.md';
-  const file = fs.readFileSync(path, 'utf8');
+  const readmePath = path.join(projectRoot, 'README.md');
+  const file = fs.readFileSync(readmePath, 'utf8');
   res.send(marked(file.toString(), { renderer: renderer }));
 });
+router.use('/screenshot', express.static(path.join(projectRoot, 'screenshot')));
 
-router.use('/ui', express.static('ui'));
+router.use('/ui', express.static(path.join(projectRoot, 'ui')));
 // router.get('/ui', function(req,res){
 
 // })
@@ -75,9 +79,8 @@ router.get('/user', function (req: Request, res: Response, next: NextFunction) {
     }
   });
 });
-router.use('/screenshot', express.static('screenshot'));
 
-router.get('/download', function (req, res) {
+router.get('/readme/download', function (req, res) {
   const file = `./README.md`;
   res.download(file, 'README.md'); // Set disposition and send it.
 });
