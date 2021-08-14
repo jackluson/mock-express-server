@@ -20,6 +20,7 @@ type Option = Pick<typeof config, 'port' | 'copy'>;
 class Server {
   config: typeof config;
   app: express.Application;
+  swaggerConfig: any;
 
   constructor(option: Option, app: express.Application) {
     const userConfig = getUserConfig();
@@ -28,12 +29,12 @@ class Server {
   }
 
   async create() {
+    await this.mergeDefinition();
     const { port, tag } = this.config;
-    const mergeDefinitionJson = await this.mergeDefinition();
     // Create mock functions based on swaggerConfig
-    const mockRoutersHandler = generateRouterHandler(mergeDefinitionJson, tag);
+    const mockRoutersHandler = generateRouterHandler(this.swaggerConfig, tag);
     const mergeRouterHandler = Object.assign({}, mockRoutersHandler, overrideHandler);
-    const connectSwagger = connector(mergeRouterHandler, mergeDefinitionJson);
+    const connectSwagger = connector(mergeRouterHandler, this.swaggerConfig);
 
     connectSwagger(this.app);
     // Print swagger router api summary
@@ -67,7 +68,18 @@ class Server {
 
     const apiDefinitionJson = (await getSwaggerConfig(url)) || {};
     const mergeDefinitionJson = _.mergeWith(fileDefinitionJson || {}, apiDefinitionJson, customizeMergeSwaggerConfig);
-    return mergeDefinitionJson;
+    // 重置原来swagger配置host，schemas
+    mergeDefinitionJson.host = '';
+    mergeDefinitionJson.schemes = ['http'];
+    this.swaggerConfig = mergeDefinitionJson;
+    return this;
+  }
+
+  useSwaggerConfig() {
+    this.app.get('/swagger-config.json', (req, res) => {
+      res.json(this.swaggerConfig);
+    });
+    return this;
   }
 
   log() {
@@ -108,7 +120,7 @@ class Server {
 
 const start = async (option?: Option) => {
   const server = new Server(option, app);
-  (await server.create()).log();
+  (await server.create()).useSwaggerConfig().log();
   // await createServer(app, option);
   // Catch 404 error
   app.use((req: any, res: any) => {

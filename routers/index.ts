@@ -36,6 +36,18 @@ renderer.image = function (href, title, alt) {
   return '<img style="max-width: 80%;" src="' + href + '" alt="' + alt + '"/>';
 };
 
+// 显示readme route处理
+router.get('/readme', function (req, res) {
+  const path = process.cwd() + '/README.md';
+  const file = fs.readFileSync(path, 'utf8');
+  res.send(marked(file.toString(), { renderer: renderer }));
+});
+
+router.use('/ui', express.static('ui'));
+// router.get('/ui', function(req,res){
+
+// })
+
 router.get('/user', function (req: Request, res: Response, next: NextFunction) {
   res.download('./README.md', 'README.md', function (err) {
     if (err) {
@@ -74,12 +86,6 @@ router.get('/fetch', function (req, res) {
   res.status(500).send({ error: 'filesomething blew up' });
   // res.set('Content-Type', 'text/html');
   // res.send(Buffer.from('whoop'));
-});
-
-router.get('/readme', function (req, res) {
-  const path = process.cwd() + '/README.md';
-  const file = fs.readFileSync(path, 'utf8');
-  res.send(marked(file.toString(), { renderer: renderer }));
 });
 
 router.post('/oa/v1/upload', function (req, res, next) {
