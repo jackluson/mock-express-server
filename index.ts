@@ -1,6 +1,6 @@
 import http from 'http';
 import type express from 'express';
-const { log } = require('@vue/cli-shared-utils');
+import { log } from '@vue/cli-shared-utils';
 import { connector, summarise } from 'swagger-routes-express';
 import chalk from 'chalk';
 import _ from 'lodash';
@@ -77,7 +77,9 @@ class Server {
 
   useSwaggerConfig() {
     this.app.get('/swagger-config.json', (req, res) => {
-      res.json(this.swaggerConfig);
+      const proto = (req.connection as any).encrypted ? 'https' : 'http';
+
+      res.json(Object.assign({}, this.swaggerConfig, { schemes: [proto] }));
     });
     return this;
   }
@@ -121,7 +123,6 @@ class Server {
 const start = async (option?: Option) => {
   const server = new Server(option, app);
   (await server.create()).useSwaggerConfig().log();
-  // await createServer(app, option);
   // Catch 404 error
   app.use((req: any, res: any) => {
     const err = new Error('Not Found');
