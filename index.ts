@@ -51,7 +51,7 @@ class Server {
   }
 
   async mergeDefinition() {
-    const { url, localPath } = this.config;
+    const { url, localPath, isHttps } = this.config;
     let fileDefinitionJson;
     if (localPath) {
       try {
@@ -70,16 +70,17 @@ class Server {
     const mergeDefinitionJson = _.mergeWith(fileDefinitionJson || {}, apiDefinitionJson, customizeMergeSwaggerConfig);
     // 重置原来swagger配置host，schemas
     mergeDefinitionJson.host = '';
-    mergeDefinitionJson.schemes = ['http'];
+    mergeDefinitionJson.schemes = ['https'];
     this.swaggerConfig = mergeDefinitionJson;
     return this;
   }
 
   useSwaggerConfig() {
+    const { isHttps } = this.config;
     this.app.get('/swagger-config.json', (req, res) => {
-      const proto = (req.connection as any).encrypted ? 'https' : 'http';
-
-      res.json(Object.assign({}, this.swaggerConfig, { schemes: [proto] }));
+      console.log('req.connection', req.connection);
+      const schemes = (req.connection as any).encrypted || isHttps ? ['https', 'http'] : ['http'];
+      res.json(Object.assign({}, this.swaggerConfig, { schemes }));
     });
     return this;
   }
